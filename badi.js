@@ -70,6 +70,39 @@ function find_day(badi_year, badi_month, badi_day) {
   return find_month_start(badi_year, badi_month).addDays(badi_day-1);
 }
 
+var debug_string = "";
+/** Finds the first gregorian day of the twin birthdays */
+function find_birthdays(gregorian_year) {
+
+  // Strategy: start with sunset of Naw Ruz in Tehran. Get the phase
+  // of the moon. Then, iterate day-by-day and get the phase of the
+  // moon at sunset in Tehran Whenever it drops, that means a new moon
+  // has occurred; increment the count. If the count of new moons has
+  // reached 8, then increment the day again. That's the first of the
+  // twin birthdays.
+  var latitude = 35.6961;
+  var longitude = 61.42306;
+
+  // Find the phase of the moon at sunset on Naw Ruz in Tehran
+  var last_day = find_naw_ruz(gregorian_year);
+  var last_sunset = SunCalc.getTimes(last_day, latitude, longitude).sunset;
+  var phase = SunCalc.getMoonIllumination(last_sunset).phase;
+  var new_moon_count = 0;
+
+  while(new_moon_count < 8) {
+    last_day = last_day.addDays(1);  
+    last_sunset = SunCalc.getTimes(last_day, latitude, longitude).sunset;
+    var new_phase = MoonPhase(last_sunset.getFullYear(), last_sunset.getMonth() + 1, last_sunset.getDate(), last_sunset.getHours() + last_sunset.getMinutes()/60 + last_sunset.getSeconds()/3600);
+    if(new_phase < 180 && phase >= 180) {
+      debug_string = debug_string + "\nNew moon before sunset on " + last_sunset;
+      new_moon_count++;
+    }
+    phase = new_phase;
+  }
+  return last_day.addDays(1);
+
+}
+
 var holy_days = [
   { name: "Naw Ruz",
     month: 0, //baha
