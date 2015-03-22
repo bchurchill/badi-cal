@@ -74,6 +74,59 @@ naw_ruz = [
 	"20 Mar 2064"
 ];
 
+var	birthdays = [
+	"13 Nov 2015",
+	"1 Nov 2016",
+	"21 Oct 2017",
+	"9 Nov 2018",
+	"29 Oct 2019",
+	"18 Oct 2020",
+	"6 Nov 2021",
+	"26 Oct 2022",
+	"16 Oct 2023",
+	"2 Nov 2024",
+	"22 Oct 2025",
+	"10 Nov 2026",
+	"30 Oct 2027",
+	"19 Oct 2028",
+	"7 Nov 2029",
+	"28 Oct 2030",
+	"17 Oct 2031",
+	"4 Nov 2032",
+	"24 Oct 2033",
+	"12 Nov 2034",
+	"1 Nov 2035",
+	"20 Oct 2036",
+	"8 Nov 2037",
+	"29 Oct 2038",
+	"19 Oct 2039",
+	"6 Nov 2040",
+	"26 Oct 2041",
+	"15 Oct 2042",
+	"3 Nov 2043",
+	"22 Oct 2044",
+	"10 Nov 2045",
+	"30 Oct 2046",
+	"20 Oct 2047",
+	"7 Nov 2048",
+	"28 Oct 2049",
+	"17 Oct 2050",
+	"5 Nov 2051",
+	"24 Oct 2052",
+	"11 Nov 2053",
+	"1 Nov 2054",
+	"21 Oct 2055",
+	"8 Nov 2056",
+	"29 Oct 2057",
+	"18 Oct 2058",
+	"6 Nov 2059",
+	"25 Oct 2060",
+	"14 Oct 2061",
+	"2 Nov 2062",
+	"23 Oct 2063",
+	"10 Nov 2064"
+];
+
 var success_count = 0;
 var failure_count = 0;
 
@@ -88,6 +141,8 @@ function finish() {
     failure(success_count + " tests passed; " + failure_count + " tests failed.");
   }
   $("#output").append("</ul>");
+  success_count = 0;
+  failure_count = 0;
 }
 
 function failure(m) {
@@ -116,12 +171,28 @@ function test_nawruz() {
       failure("Naw-Ruz in " + year + " is on " + expected + " but computed " + actual + ".");
     }
   }
+  finish();
+}
+
+function test_birthdays() {
+  header("Twin Birthdays tests");
+  for(var i = 0; i < birthdays.length; i++) {
+    var expected = new Date(birthdays[i]);
+    var year = expected.getFullYear();
+    var actual = find_birthdays(year);
+    if(expected.getTime() == actual.getTime()) {
+      success("Twin birthdays correct for " + year + ".");
+    } else {
+      failure("Twin birthdays in " + year + " is on " + expected + " but computed " + actual + ".");
+    }
+  }
+  finish();
 }
 
 $(window).load(function() {
   start();
   test_nawruz();
-  finish();
+  test_birthdays();
 });
 </script>
 </head>
