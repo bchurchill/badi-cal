@@ -108,13 +108,13 @@ function find_birthdays(gregorian_year) {
   // Find the phase of the moon at sunset on Naw Ruz in Tehran
   var last_day = find_naw_ruz(gregorian_year);
   var last_sunset = tehran_sunset(last_day);
-  var phase = MoonPhase(last_sunset.getFullYear(), last_sunset.getMonth() + 1, last_sunset.getDate(), last_sunset.getHours() + last_sunset.getMinutes()/60 + last_sunset.getSeconds()/3600);
+  var phase = MoonPhase(last_sunset.getUTCFullYear(), last_sunset.getUTCMonth() + 1, last_sunset.getUTCDate(), last_sunset.getUTCHours() + last_sunset.getUTCMinutes()/60 + last_sunset.getUTCSeconds()/3600);
   var new_moon_count = 0;
 
   while(new_moon_count < 8) {
     last_day = last_day.addDays(1);  
     last_sunset = tehran_sunset(last_day);
-    var new_phase = MoonPhase(last_sunset.getFullYear(), last_sunset.getMonth() + 1, last_sunset.getDate(), last_sunset.getHours() + last_sunset.getMinutes()/60 + last_sunset.getSeconds()/3600);
+    var new_phase = MoonPhase(last_sunset.getUTCFullYear(), last_sunset.getUTCMonth() + 1, last_sunset.getUTCDate(), last_sunset.getUTCHours() + last_sunset.getUTCMinutes()/60 + last_sunset.getUTCSeconds()/3600);
     if(new_phase < 180 && phase >= 180) {
       $('#output').append("New moon before sunset on " + last_sunset.toUTCString() + "<br />");
       new_moon_count++;
