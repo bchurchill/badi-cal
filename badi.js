@@ -6,10 +6,10 @@ Date.prototype.addDays = function(days)
     return dat;
 }
 
-// Tehran is at 35°41′46″N 51°25′23″E
-var Tehran = {
-  latitude: 35.6961,
-  longitude: 51.42306
+// Tehran is at 35°41′40″N 51°25′17″E
+var BadiData = {
+  tehran_latitude: 35.6944,
+  tehran_longitude: -51.4215
 }
 
 /** Returns the corresponding Badi year to Naw Ruz of this Gregorian Year */
@@ -36,8 +36,8 @@ function find_naw_ruz(gregorian_year) {
                 equinox_utc.getFullYear(), 
                 equinox_utc.getMonth(), 
                 equinox_utc.getDate(),
-                Tehran.latitude,
-                Tehran.longitude)[1];
+                BadiData.tehran_latitude,
+                BadiData.tehran_longitude)[1];
   var sunset_hours = Math.floor(sunset);
   var sunset_minutes = Math.floor((sunset - sunset_hours)*60);
   var sunset_seconds = Math.floor(((sunset - sunset_hours)*60 - sunset_minutes)*60);
@@ -94,18 +94,16 @@ function find_birthdays(gregorian_year) {
   // has occurred; increment the count. If the count of new moons has
   // reached 8, then increment the day again. That's the first of the
   // twin birthdays.
-  var latitude = 35.6961;
-  var longitude = 61.42306;
-
+ 
   // Find the phase of the moon at sunset on Naw Ruz in Tehran
   var last_day = find_naw_ruz(gregorian_year);
-  var last_sunset = SunCalc.getTimes(last_day, latitude, longitude).sunset;
+  var last_sunset = SunCalc.getTimes(last_day, BadiData.tehran_latitude, BadiData.tehran_longitude).sunset;
   var phase = SunCalc.getMoonIllumination(last_sunset).phase;
   var new_moon_count = 0;
 
   while(new_moon_count < 8) {
     last_day = last_day.addDays(1);  
-    last_sunset = SunCalc.getTimes(last_day, latitude, longitude).sunset;
+    last_sunset = SunCalc.getTimes(last_day, BadiData.tehran_latitude, BadiData.tehran_longitude).sunset;
     var new_phase = MoonPhase(last_sunset.getFullYear(), last_sunset.getMonth() + 1, last_sunset.getDate(), last_sunset.getHours() + last_sunset.getMinutes()/60 + last_sunset.getSeconds()/3600);
     if(new_phase < 180 && phase >= 180) {
       debug_string = debug_string + "\nNew moon before sunset on " + last_sunset;
