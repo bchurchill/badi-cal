@@ -54,11 +54,11 @@ function find_naw_ruz(gregorian_year) {
 
   // Step 1: find UTC time of the equinox
   var equinox_utc = vernal_equinox(gregorian_year);
-  $('#output').append("equinox: " + equinox_utc.toUTCString() + "<br />");
+  //$('#output').append("equinox: " + equinox_utc.toUTCString() + "<br />");
 
   // Step 2: find Tehran's sunset on the day of the equinox
   var sunset_utc = tehran_sunset(equinox_utc);
-  $('#output').append("sunset_utc: " + sunset_utc.toUTCString() + "<br />");
+  //$('#output').append("sunset_utc: " + sunset_utc.toUTCString() + "<br />");
 
   var sunset_day = new Date(equinox_utc.getFullYear(), equinox_utc.getMonth(), equinox_utc.getDate());
   if(equinox_utc < sunset_utc) {
@@ -94,34 +94,54 @@ function find_day(badi_year, badi_month, badi_day) {
   return find_month_start(badi_year, badi_month).addDays(badi_day-1);
 }
 
+/** Takes a date and returns the date of the next new moon */
+function next_new_moon(date, min) {
+  
+  var quarters = MoonQuarters(
+    date.getUTCFullYear(), 
+    date.getUTCMonth()+1, 
+    date.getUTCDate(), 
+    0
+  );
+
+  var new_moon = jdtocd(quarters[0]);
+
+  var new_moon_date = new Date(Date.UTC(
+    new_moon[0],
+    new_moon[1] - 1,
+    new_moon[2],
+    new_moon[4],
+    new_moon[5],
+    new_moon[6]));
+
+  if(new_moon_date > min) {
+    return new_moon_date;
+  } else {
+    return next_new_moon(new_moon_date.addDays(30), min);
+  }
+
+}
+
 var debug_string = "";
 /** Finds the first gregorian day of the twin birthdays */
 function find_birthdays(gregorian_year) {
 
-  // Strategy: start with sunset of Naw Ruz in Tehran. Get the phase
-  // of the moon. Then, iterate day-by-day and get the phase of the
-  // moon at sunset in Tehran Whenever it drops, that means a new moon
-  // has occurred; increment the count. If the count of new moons has
-  // reached 8, then increment the day again. That's the first of the
-  // twin birthdays.
- 
-  // Find the phase of the moon at sunset on Naw Ruz in Tehran
+  // Compute 8 new moons past Naw Ruz
   var last_day = find_naw_ruz(gregorian_year);
-  var last_sunset = tehran_sunset(last_day);
-  var phase = MoonPhase(last_sunset.getUTCFullYear(), last_sunset.getUTCMonth() + 1, last_sunset.getUTCDate(), last_sunset.getUTCHours() + last_sunset.getUTCMinutes()/60 + last_sunset.getUTCSeconds()/3600);
-  var new_moon_count = 0;
-
-  while(new_moon_count < 8) {
-    last_day = last_day.addDays(1);  
-    last_sunset = tehran_sunset(last_day);
-    var new_phase = MoonPhase(last_sunset.getUTCFullYear(), last_sunset.getUTCMonth() + 1, last_sunset.getUTCDate(), last_sunset.getUTCHours() + last_sunset.getUTCMinutes()/60 + last_sunset.getUTCSeconds()/3600);
-    if(new_phase < 180 && phase >= 180) {
-      $('#output').append("New moon before sunset on " + last_sunset.toUTCString() + "<br />");
-      new_moon_count++;
-    }
-    phase = new_phase;
+  last_day = tehran_sunset(last_day);
+  for(var i = 0; i < 8; i++) {
+    last_day = next_new_moon(last_day, last_day);
   }
-  return last_day.addDays(1);
+
+  var sunset = tehran_sunset(last_day);
+  if(last_day < sunset) {
+    last_day = last_day.addDays(1);
+  } else {
+    last_day = last_day.addDays(2);
+  }
+
+  var ret_date = new Date(last_day.getFullYear(), last_day.getMonth(), last_day.getDate());
+  return ret_date;
 
 }
 
