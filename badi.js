@@ -6,6 +6,12 @@ Date.prototype.addDays = function(days)
     return dat;
 }
 
+// Tehran is at 35°41′46″N 51°25′23″E
+var Tehran = {
+  latitude: 35.6961,
+  longitude: 51.42306
+}
+
 /** Returns the corresponding Badi year to Naw Ruz of this Gregorian Year */
 function gregorian_to_badi(gregorian_year) {
   //1843 is not a mistake!!  1844 was year 1.
@@ -24,25 +30,33 @@ function find_naw_ruz(gregorian_year) {
   var equinox_utc = vernal_equinox(gregorian_year);
 
   // Step 2: find Tehran's sunset on the gregorian day with the equinox
-  // Tehran is at 35°41′46″N 51°25′23″E
-  var latitude = 35.6961;
-  var longitude = 61.42306;
+  var sunset_day = new Date(equinox_utc.getFullYear(), equinox_utc.getMonth(), equinox_utc.getDate());
+  $('#output').append("equinox: " + equinox_utc.toUTCString() + "<br />");
+  var sunset = SunRiseSet(
+                equinox_utc.getFullYear(), 
+                equinox_utc.getMonth(), 
+                equinox_utc.getDate(),
+                Tehran.latitude,
+                Tehran.longitude)[1];
+  var sunset_hours = Math.floor(sunset);
+  var sunset_minutes = Math.floor((sunset - sunset_hours)*60);
+  var sunset_seconds = Math.floor(((sunset - sunset_hours)*60 - sunset_minutes)*60);
+  var sunset_local = new Date(
+                        equinox_utc.getFullYear(),
+                        equinox_utc.getMonth(),
+                        equinox_utc.getDate(),
+                        sunset_hours,
+                        sunset_minutes,
+                        sunset_seconds);
+  var sunset_utc = new Date(sunset_local.getTime() - (new Date).getTimezoneOffset()*60*1000);
+  $('#output').append("sunset_utc: " + sunset_utc.toUTCString() + "<br />");
 
-  var times = SunCalc.getTimes(equinox_utc, latitude, longitude);
-  var sunset = times.sunset;
-  var sunset_date = new Date(sunset.getFullYear(), sunset.getMonth(), sunset.getDate());
-  // Note: that the gregorian date of 'sunset' may be different from
-  // the gregorian date of 'equinox_utc' because of time zones. e.g.
-  // 2015: equinox is Mar 20 10pm UTC, but Mar 21 2am in Tehran.
-  // SunCalc correctly gets sunset for the right day, causing 'sunset'
-  // to be Mar 21 7pm in Tehran.
-
-  if(equinox_utc < times.sunset) {
+  if(equinox_utc < sunset_utc) {
     // If equinox before sunset, we take the gregorian date from the day of sunset
-    return sunset_date;
+    return sunset_day;
   } else {
     // if equinox after sunet, we take the gregorian date from day after sunset
-    return sunset_date.addDays(1);
+    return sunset_day.addDays(1);
   }
 }
 
