@@ -14,13 +14,40 @@ var BadiData = {
 
 /** Returns the corresponding Badi year to Naw Ruz of this Gregorian Year */
 function gregorian_to_badi(gregorian_year) {
-  //1843 is not a mistake!!  1844 was year 1.
-  return gregorian_year - 1843;
+  return (gregorian_year + 1) - 1844;
 }
 
 /** Returns the gregorian year in which the corresponding Badi year starts */
 function badi_to_gregorian(badi_year) {
-  return 1843 + badi_year;
+  return 1844 + (badi_year - 1);
+}
+
+/** Returns sunset in Tehran on a given gregorian day */
+function tehran_sunset(date) {
+
+  // Get UTC hours of Sunset
+  var sunset = SunRiseSet(
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate(),
+                BadiData.tehran_latitude,
+                BadiData.tehran_longitude)[1];
+  var sunset_hours = Math.floor(sunset);
+  var sunset_minutes = Math.floor((sunset - sunset_hours)*60);
+  var sunset_seconds = Math.floor(((sunset - sunset_hours)*60 - sunset_minutes)*60);
+
+  // When we put this information into a date, it treats it as local time
+  var sunset_local = new Date(
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate(),
+                sunset_hours,
+                sunset_minutes,
+                sunset_seconds);
+
+  var sunset_utc = new Date(sunset_local.getTime() - (new Date).getTimezoneOffset()*60*1000);
+
+  return sunset_utc;
 }
 
 /** Gets the day of Naw Ruz in a given gregorian year */
@@ -28,29 +55,13 @@ function find_naw_ruz(gregorian_year) {
 
   // Step 1: find UTC time of the equinox
   var equinox_utc = vernal_equinox(gregorian_year);
-
-  // Step 2: find Tehran's sunset on the gregorian day with the equinox
-  var sunset_day = new Date(equinox_utc.getFullYear(), equinox_utc.getMonth(), equinox_utc.getDate());
   $('#output').append("equinox: " + equinox_utc.toUTCString() + "<br />");
-  var sunset = SunRiseSet(
-                equinox_utc.getFullYear(), 
-                equinox_utc.getMonth(), 
-                equinox_utc.getDate(),
-                BadiData.tehran_latitude,
-                BadiData.tehran_longitude)[1];
-  var sunset_hours = Math.floor(sunset);
-  var sunset_minutes = Math.floor((sunset - sunset_hours)*60);
-  var sunset_seconds = Math.floor(((sunset - sunset_hours)*60 - sunset_minutes)*60);
-  var sunset_local = new Date(
-                        equinox_utc.getFullYear(),
-                        equinox_utc.getMonth(),
-                        equinox_utc.getDate(),
-                        sunset_hours,
-                        sunset_minutes,
-                        sunset_seconds);
-  var sunset_utc = new Date(sunset_local.getTime() - (new Date).getTimezoneOffset()*60*1000);
+
+  // Step 2: find Tehran's sunset on the day of the equinox
+  var sunset_utc = tehran_sunset(equinox_utc);
   $('#output').append("sunset_utc: " + sunset_utc.toUTCString() + "<br />");
 
+  var sunset_day = new Date(equinox_utc.getFullYear(), equinox_utc.getMonth(), equinox_utc.getDate());
   if(equinox_utc < sunset_utc) {
     // If equinox before sunset, we take the gregorian date from the day of sunset
     return sunset_day;
@@ -97,13 +108,13 @@ function find_birthdays(gregorian_year) {
  
   // Find the phase of the moon at sunset on Naw Ruz in Tehran
   var last_day = find_naw_ruz(gregorian_year);
-  var last_sunset = SunCalc.getTimes(last_day, BadiData.tehran_latitude, BadiData.tehran_longitude).sunset;
-  var phase = SunCalc.getMoonIllumination(last_sunset).phase;
+  var last_sunset = tehran_sunset(last_day);
+  var phase = MoonPhase(last_sunset.getFullYear(), last_sunset.getMonth() + 1, last_sunset.getDate(), last_sunset.getHours() + last_sunset.getMinutes()/60 + last_sunset.getSeconds()/3600);
   var new_moon_count = 0;
 
   while(new_moon_count < 8) {
     last_day = last_day.addDays(1);  
-    last_sunset = SunCalc.getTimes(last_day, BadiData.tehran_latitude, BadiData.tehran_longitude).sunset;
+    last_sunset = tehran_sunset(last_day);
     var new_phase = MoonPhase(last_sunset.getFullYear(), last_sunset.getMonth() + 1, last_sunset.getDate(), last_sunset.getHours() + last_sunset.getMinutes()/60 + last_sunset.getSeconds()/3600);
     if(new_phase < 180 && phase >= 180) {
       debug_string = debug_string + "\nNew moon before sunset on " + last_sunset;
