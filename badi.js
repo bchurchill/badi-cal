@@ -9,7 +9,7 @@ Date.prototype.addDays = function(days)
 // Tehran is at 35°41′40″N 51°25′17″E
 var BadiData = {
   tehran_latitude: 35.6944,
-  tehran_longitude: -51.4215
+  tehran_longitude: 51.4215
 }
 
 /** Returns the corresponding Badi year to Naw Ruz of this Gregorian Year */
@@ -28,24 +28,23 @@ function tehran_sunset(date) {
   // Get UTC hours of Sunset
   var sunset = SunRiseSet(
                 date.getFullYear(),
-                date.getMonth(),
+                date.getMonth()+1,
                 date.getDate(),
                 BadiData.tehran_latitude,
                 BadiData.tehran_longitude)[1];
+
   var sunset_hours = Math.floor(sunset);
   var sunset_minutes = Math.floor((sunset - sunset_hours)*60);
   var sunset_seconds = Math.floor(((sunset - sunset_hours)*60 - sunset_minutes)*60);
 
   // When we put this information into a date, it treats it as local time
-  var sunset_local = new Date(
+  var sunset_utc = new Date(Date.UTC(
                 date.getFullYear(),
                 date.getMonth(),
                 date.getDate(),
                 sunset_hours,
                 sunset_minutes,
-                sunset_seconds);
-
-  var sunset_utc = new Date(sunset_local.getTime() - (new Date).getTimezoneOffset()*60*1000);
+                sunset_seconds));
 
   return sunset_utc;
 }
@@ -117,7 +116,7 @@ function find_birthdays(gregorian_year) {
     last_sunset = tehran_sunset(last_day);
     var new_phase = MoonPhase(last_sunset.getFullYear(), last_sunset.getMonth() + 1, last_sunset.getDate(), last_sunset.getHours() + last_sunset.getMinutes()/60 + last_sunset.getSeconds()/3600);
     if(new_phase < 180 && phase >= 180) {
-      debug_string = debug_string + "\nNew moon before sunset on " + last_sunset;
+      $('#output').append("New moon before sunset on " + last_sunset.toUTCString() + "<br />");
       new_moon_count++;
     }
     phase = new_phase;
