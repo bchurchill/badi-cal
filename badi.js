@@ -1,4 +1,5 @@
 
+/** Add a fixed number of days to a Date object. */
 Date.prototype.addDays = function(days)
 {
     var dat = new Date(this.valueOf());
@@ -6,6 +7,9 @@ Date.prototype.addDays = function(days)
     return dat;
 }
 
+/** Construct a date on the Badi Calendar.  Objects of this class
+ * just have a 'year', 'month' and 'day' field, along with some 
+ * helper functions and extra data (e.g. names of the months) */
 function BadiDate(badi_year, badi_month, badi_day) {
 
   /** Year 1 is 1844 */
@@ -41,11 +45,19 @@ function BadiDate(badi_year, badi_month, badi_day) {
     "‘Alá’"
   ]
 
+  /** Print text representation of this date. */
   this.toString = function() {
-    this.day + " " + this.monthNames[this.month] + " " + this.year;
+    return this.day + " " + this.monthNames[this.month] + " " + this.year;
+  }
+
+  /** Compare.  Returns negative if 'this' comes before 'other', zero if same,
+   * positive if 'this' comes after 'other'. */
+  this.compare = function(other) {
+    return (this.year - other.year)*400 + (this.month - other.month)*19 + (this.day - other.day);
   }
 }
 
+/** Various data used by this application */
 var BadiData = {
   // Tehran is at 35°41′40″N 51°25′17″E
   tehran_latitude: 35.6944,
@@ -107,7 +119,7 @@ function tehran_sunset(date) {
   var sunset_minutes = Math.floor((sunset - sunset_hours)*60);
   var sunset_seconds = Math.floor(((sunset - sunset_hours)*60 - sunset_minutes)*60);
 
-  // When we put this information into a date, it treats it as local time
+  // Put this into a Date object
   var sunset_utc = new Date(Date.UTC(
                 date.getUTCFullYear(),
                 date.getUTCMonth(),
@@ -153,45 +165,25 @@ function find_naw_ruz(gregorian_year) {
   }
 }
 
-/** Gets the Gregorian start date of a given badi month */
-function find_month_start(badi_year, badi_month) {
-  if(badi_month < 18) {
-    // normal computation
-    var gregorian_start = badi_to_gregorian(badi_year);
-    var naw_ruz = find_naw_ruz(gregorian_start);
-    var add_days = badi_month*19;
-    return naw_ruz.addDays(add_days);
-  } else if (badi_month == 18) {
-    // month of `Ala (the fast): compute from next gregorian year
-    var gregorian_end = badi_to_gregorian(badi_year + 1);
-    var naw_ruz = find_naw_ruz(gregorian_end);
-    return naw_ruz.addDays(-19);
-  } 
-
-  // TODO: error handling code here
-  return 0;
-}
-
-/** Gets the Gregorian date of a particular Badi day.  Note: month is 0-indexed, day is 1-indexed. */
-function find_day(badi_year, badi_month, badi_day) {
-  return find_month_start(badi_year, badi_month).addDays(badi_day-1);
-}
-
-function badi_year_to_gregorian_year(year) {
+function badi_year_to_gregorian(year) {
   return (year - 1) + 1844;
+}
+
+function gregorian_year_to_badi(year) {
+  return (year - 1844) + 1;
 }
 
 function badi_to_gregorian(badi) {
 
   if(badi.month < 19) {
     // normal computation, including for Ayyam-i-Ha
-    var gregorian_start = badi_year_to_gregorian_year(badi.year);
+    var gregorian_start = badi_year_to_gregorian(badi.year);
     var naw_ruz = find_naw_ruz(gregorian_start);
-    var add_days = badi_month*19 + badi.day;
+    var add_days = badi.month*19 + badi.day;
     return naw_ruz.addDays(add_days);
-  } else if (badi_month == 19) {
+  } else if (badi.month == 19) {
     // month of `Ala (the fast): compute from next gregorian year
-    var gregorian_end = badi_to_gregorian(badi.year + 1);
+    var gregorian_end = badi_year_to_gregorian(badi.year + 1);
     var naw_ruz = find_naw_ruz(gregorian_end);
     var add_days = -19 + badi.day;
     return naw_ruz.addDays(add_days);
@@ -200,9 +192,15 @@ function badi_to_gregorian(badi) {
   throw "Got invalid Badi month " + badi.month;
 }
 
-/** Takes a date and returns the date of the next new moon */
+/** Takes a date and returns the date of the next new moon.
+ *  This function is recursive.  A client should call this function with two
+ *  identical parameters.  
+ *
+ *  The detailed contract is this: find the first new moon during or after 
+ *  the lunar cycle containing 'date' but occurring after the time 'min'. */
 function next_new_moon(date, min) {
   
+  // 1. Find the new moon during cycle 'date'
   var quarters = MoonQuarters(
     date.getUTCFullYear(), 
     date.getUTCMonth()+1, 
@@ -220,15 +218,16 @@ function next_new_moon(date, min) {
     new_moon[5],
     new_moon[6]));
 
+  // 2. If this new moon is in the future, we're done!
   if(new_moon_date > min) {
     return new_moon_date;
   } else {
+    // 3. Otherwise, we need to look at the next lunar cycle
     return next_new_moon(new_moon_date.addDays(30), min);
   }
 
 }
 
-var debug_string = "";
 /** Finds the first gregorian day of the twin birthdays */
 function find_birthdays(gregorian_year) {
 
@@ -255,67 +254,66 @@ function find_birthdays(gregorian_year) {
 }
 
 
+/** Constructs an object that we'll render in the UI, somehow */
+function DayUIObj(title, date, badi_date, type) {
+  this.title = title;
+  this.date = date;
+  this.badi_date = badi_date;
+  this.type = type;
 
+  /** Get a simple text representation */
+  this.toString = function() {
+    return this.title + 
+            ": sunset of " + date.addDays(-1).toLocaleDateString() + 
+            " to sunset of " + date.toLocaleDateString(); 
+  }
+}
 
 
 /** Find all the important days in Gregorian date range */
 function find_days(start_date, end_date) {
   // 1. find start/end badi years
-  var start_year = gregorian_to_badi(start_date.getUTCFullYear()) - 1;
-  var end_year = gregorian_to_badi(end_date.getUTCFullYear()) + 1;
+  var start_year = gregorian_year_to_badi(start_date.getUTCFullYear()) - 1;
+  var end_year = gregorian_year_to_badi(end_date.getUTCFullYear()) + 1;
 
   var days = []
 
   for(var badi_year = start_year; badi_year <= end_year; badi_year++) {
     // 2. find all holy days
-    for(var i = 0; i < holy_days.length; i++) {
-      var holy_day = holy_days[i];
-      var day = {
-        name: holy_day.name,
-        date: find_day(badi_year, holy_day.month, holy_day.day),
-        type: (holy_day.suspend ? "Holy Day - Work suspended" : "Holy Day - Work not suspended")
-      };
+    for(var i = 0; i < BadiData.holy_days.length; i++) {
+      var holy_day = BadiData.holy_days[i];
+      var badi_day = new BadiDate(badi_year, holy_day.month, holy_day.day);
+      var greg_day = badi_to_gregorian(badi_day);
+      var day = new DayUIObj(holy_day.name, greg_day, badi_day, "Holy Day");
       days.push(day);
     }
 
     // 3. find the first day of each month
-    for(var i = 0; i < months.length; i++) {
-      var day = {
-        name: "1st of " + months[i],
-        date: find_day(badi_year, i, 1),
-        type: "Feast Day"
-      };
+    for(var i = 0; i <= 19; i++) {
+      var badi_day = new BadiDate(badi_year, i, 1);
+      var greg_day = badi_to_gregorian(badi_day);
+      var day = new DayUIObj(badi_day.toString(), greg_day, badi_day, "Feast Day");
       days.push(day);
     }
-
-    // 4. Ayyam-i-Ha
-    days.push({
-      name: "First day of Ayyam-i-Ha",
-      date: find_day(badi_year, 17, 20),
-      type: "Other"
-    });
-
-    days.push({
-      name: "Last day of Ayyam-i-Ha",
-      date: find_day(badi_year, 18, 0),
-      type: "Other"
-    });
   }
 
-  // filter through these to find those that are actually in provided date range
+  // 4. filter through these to find those that are actually in provided date range
   days = days.filter(function(day) {
-    return (start_date <= day.date && day.date <= end_date);
+    return (start_date <= day.date.addDays(-1) && day.date <= end_date);
+  });
+
+  // 5. sort by gregorian date
+  days = days.sort(function(x, y) {
+    if (x.date.getTime() < y.date.getTime()) {
+      return -1;
+    } else if (x.date.getTime() == y.date.getTime()) {
+      return 0;
+    } else {
+      return 1;
+    }
   });
 
   return days;
 }
 
-/** Get text representation of a "day" */
-function day_to_string(day) {
-  var end = new Date(Date.UTC(
-    day.date.getUTCFullYear(), 
-    day.date.getUTCMonth(), 
-    day.date.getUTCDate()));
-  var start = end.addDays(-1);
-  return day.name + ": sunset of " + start.toLocaleDateString() + " to sunset of " + end.toLocaleDateString(); 
-}
+
