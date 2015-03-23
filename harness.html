@@ -14,13 +14,14 @@
 </style>
 
 <script src="stellafane.js"></script>
-<script src="suncalc.js"></script>
 <script src="blueyonder/blueyonder.js"></script>
 <script src="badi.js" charset="utf-8"></script>
 
 <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
 <script>
 //This is the code for testing against the UHJ-provided table of dates
+
+// DATA
 naw_ruz = [
 	"21 Mar 2015",
 	"20 Mar 2016",
@@ -127,6 +128,8 @@ var	birthdays = [
 	"10 Nov 2064"
 ];
 
+// TESTING INFRASTRUCTURE
+
 var success_count = 0;
 var failure_count = 0;
 
@@ -155,12 +158,19 @@ function success(m) {
   $("#output").append("<li class='success'>" + m + "</li>");
 }
 
+function info(m) {
+  $("#output").append("<li>" + m + "</li>");
+}
+
 function header(m) {
   $("#output").append("</ul><h3>" + m + "</h3><ul>");
 }
 
+// TESTS
+
 function test_nawruz() {
   header("Naw-Ruz tests");
+  info("Compare Naw-Ruz to UHJ tables");
   for(var i = 0; i < naw_ruz.length; i++) {
     var expected = new Date(naw_ruz[i] + " 00:00 UTC");
     var year = expected.getFullYear();
@@ -170,12 +180,23 @@ function test_nawruz() {
     } else {
       failure("Naw-Ruz in " + year + " is on " + expected + " but computed " + actual + ".");
     }
+
+    // alternate way of computing naw ruz with badi_to_gregorian
+    var badi_year = gregorian_year_to_badi(year);
+    var badi_day = new BadiDate(badi_year, 0, 1);
+    var gregorian_day = badi_to_gregorian(badi_day);
+    if(expected.getTime() == gregorian_day.getTime()) {
+      success("Cross-checked with badi_to_gregorian");
+    } else {
+      failure("badi_to_gregorian cross check failed with " + badi_day.toString() + " and " + actual.toUTCString() + " but expected " + actual.toUTCString());
+    }
   }
   finish();
 }
 
 function test_birthdays() {
   header("Twin Birthdays tests");
+  info("Compare Birth of Bahá'u'lláh and the Báb to UHJ tables")
   for(var i = 0; i < birthdays.length; i++) {
     var expected = new Date(birthdays[i] + " 00:00 UTC");
     var year = expected.getFullYear();
@@ -189,10 +210,38 @@ function test_birthdays() {
   finish();
 }
 
+function test_inverses() {
+  header("Gregorian-Badi Inverses Test")
+  info("Take random Gregorian date, convert to Badi, convert back, make sure it's the same");
+
+  var n = 50
+  for(var i = 0; i < n; i++) {
+    // Pick a date in the next n years
+    var random_date = new Date();
+    random_date = new Date(random_date.getTime() + Math.random()*(1000*60*60*24*365*n));
+    random_date.setUTCHours(0);
+    random_date.setUTCMinutes(0);
+    random_date.setUTCSeconds(0);
+    random_date.setUTCMilliseconds(0);
+
+    var badi = gregorian_to_badi(random_date);
+    var orig = badi_to_gregorian(badi);
+    if(orig.getTime() == random_date.getTime()) {
+      success(random_date.toUTCString() + " converted to " + badi.toString() + " and back.");
+    } else {
+      failure(random_date.toUTCString() + " converted to " + badi.toString() + " then to " + orig.toUTCString());
+    }
+  }
+  finish();
+}
+
+// STARTUP
+
 $(window).load(function() {
   start();
   test_nawruz();
   test_birthdays();
+  test_inverses();
 });
 </script>
 </head>

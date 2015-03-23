@@ -2,8 +2,9 @@
 /** Add a fixed number of days to a Date object. */
 Date.prototype.addDays = function(days)
 {
-    var dat = new Date(this.valueOf());
-    dat.setDate(dat.getDate() + days);
+    // don't want to setDate() because this will factor in local timezones
+    // and mess up UTC computations
+    var dat = new Date(this.getTime() + days*1000*24*60*60);
     return dat;
 }
 
@@ -84,7 +85,7 @@ var BadiData = {
       month: 3, //azamat
       day: 8,
       suspend: true },
-    { name: "Ascension of Bahá'u'lláh",
+    { name: "Ascension of Bahá’u’lláh",
       month: 3, //azamat
       day: 13,
       suspend: true },
@@ -96,7 +97,7 @@ var BadiData = {
       month: 13, //qawl
       day: 4,
       suspend: false },
-    { name: "Ascension of `Abdu'l-Bahá",
+    { name: "Ascension of ‘Abdu’l-Bahá",
       month: 13, //qawl
       day: 6,
       suspend: false }
@@ -131,7 +132,7 @@ function tehran_sunset(date) {
   return sunset_utc;
 }
 
-/** Gets the day of Naw Ruz in a given gregorian year */
+/** Gets the day of Naw Ruz in a given gregorian year.  It returns the day at 00:00:00 UTC. */
 function find_naw_ruz(gregorian_year) {
 
   // Step 0: Follow to the UHJ
@@ -173,23 +174,70 @@ function gregorian_year_to_badi(year) {
   return (year - 1844) + 1;
 }
 
+/** Takes a BadiDate and returns a Date.  This is timezone-independent,
+ * since the BadiDate doesn't keep track of times.  It returns */
 function badi_to_gregorian(badi) {
 
   if(badi.month < 19) {
     // normal computation, including for Ayyam-i-Ha
     var gregorian_start = badi_year_to_gregorian(badi.year);
     var naw_ruz = find_naw_ruz(gregorian_start);
-    var add_days = badi.month*19 + badi.day;
+    var add_days = badi.month*19 + badi.day - 1;
     return naw_ruz.addDays(add_days);
   } else if (badi.month == 19) {
     // month of `Ala (the fast): compute from next gregorian year
     var gregorian_end = badi_year_to_gregorian(badi.year + 1);
     var naw_ruz = find_naw_ruz(gregorian_end);
-    var add_days = -19 + badi.day;
+    var add_days = badi.day - 19 - 1;
     return naw_ruz.addDays(add_days);
   } 
 
   throw "Got invalid Badi month " + badi.month;
+}
+
+/** Takes a Date and returns a BadiDate.  We disregard the time and 
+ * consider the date to be at 00:00:00. UTC This function is designed
+ * to be an inverse of badi_to_gregorian for all inputs. */
+function gregorian_to_badi(date) {
+
+  // Figure out the correct Badi year and Naw Ruz
+  var gregorian_year = date.getUTCFullYear();
+  var naw_ruz = find_naw_ruz(gregorian_year);
+  var badi_year = gregorian_year_to_badi(date.getUTCFullYear());
+  if(date < naw_ruz) {
+    badi_year = badi_year - 1;
+    gregorian_year = gregorian_year - 1;
+    naw_ruz = find_naw_ruz(gregorian_year);
+  }
+
+  // Count the days past Naw Ruz it is
+  var diff = Math.floor((date - naw_ruz)/(1000*60*60*24));
+  var month = Math.floor(diff/19);
+
+  if(month < 18) {
+    // the first 18 months are easy :)
+    var day = diff - month*19 + 1;
+    return new BadiDate(badi_year, month, day);
+  }
+
+  if(month == 18 || month == 19) {
+    // Day offset from beginning of Ayyam-i-Ha / end of Mulk
+    var after_mulk = diff - 18*19;
+
+    // need to get next Naw-Ruz and count backward 
+    var next_naw_ruz = find_naw_ruz(gregorian_year + 1);
+    var year_length = (next_naw_ruz - naw_ruz)/(1000*60*60*24);
+    var ayyam_days = year_length - 19*19;
+
+    if (after_mulk < ayyam_days) {
+      return new BadiDate(badi_year, 18, after_mulk + 1);
+    } else {
+      return new BadiDate(badi_year, 19, after_mulk + 1 - ayyam_days);
+    }
+  }
+
+  throw "Bad month: " + month;
+
 }
 
 /** Takes a date and returns the date of the next new moon.
@@ -263,9 +311,14 @@ function DayUIObj(title, date, badi_date, type) {
 
   /** Get a simple text representation */
   this.toString = function() {
+
+    // Since we represent a day at 00:00:00 UTC, for displaying local time we 
+    // need to make sure we adjust the timezone 
+    mydate = new Date(this.date.getTime() + this.date.getTimezoneOffset()*60*1000);
+
     return this.title + 
-            ": sunset of " + date.addDays(-1).toLocaleDateString() + 
-            " to sunset of " + date.toLocaleDateString(); 
+            ": sunset of " + mydate.addDays(-1).toLocaleDateString() + 
+            " to sunset of " + mydate.toLocaleDateString(); 
   }
 }
 
@@ -295,14 +348,23 @@ function find_days(start_date, end_date) {
       var day = new DayUIObj(badi_day.toString(), greg_day, badi_day, "Feast Day");
       days.push(day);
     }
+
+    // 4. Find Birth of the Báb and Birth of Bahá'u'lláh
+    var bday = find_birthdays(badi_year_to_gregorian(badi_year));
+    var badi_bday1 = gregorian_to_badi(bday);
+    var badi_bday2 = gregorian_to_badi(bday.addDays(1));
+    var day1 = new DayUIObj("Birth of the Báb", bday, badi_bday1, "Holy Day");
+    var day2 = new DayUIObj("Birth of Bahá’u’lláh", bday.addDays(1), badi_bday2, "Holy Day");
+    days.push(day1);
+    days.push(day2);
   }
 
-  // 4. filter through these to find those that are actually in provided date range
+  // 5. filter through these to find those that are actually in provided date range
   days = days.filter(function(day) {
     return (start_date <= day.date.addDays(-1) && day.date <= end_date);
   });
 
-  // 5. sort by gregorian date
+  // 6. sort by gregorian date
   days = days.sort(function(x, y) {
     if (x.date.getTime() < y.date.getTime()) {
       return -1;
