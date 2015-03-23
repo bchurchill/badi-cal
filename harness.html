@@ -162,7 +162,7 @@ function header(m) {
 function test_nawruz() {
   header("Naw-Ruz tests");
   for(var i = 0; i < naw_ruz.length; i++) {
-    var expected = new Date(naw_ruz[i]);
+    var expected = new Date(naw_ruz[i] + " 00:00 UTC");
     var year = expected.getFullYear();
     var actual = find_naw_ruz(year);
     if(expected.getTime() == actual.getTime()) {
@@ -177,7 +177,7 @@ function test_nawruz() {
 function test_birthdays() {
   header("Twin Birthdays tests");
   for(var i = 0; i < birthdays.length; i++) {
-    var expected = new Date(birthdays[i]);
+    var expected = new Date(birthdays[i] + " 00:00 UTC");
     var year = expected.getFullYear();
     var actual = find_birthdays(year);
     if(expected.getTime() == actual.getTime()) {

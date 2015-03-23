@@ -6,20 +6,90 @@ Date.prototype.addDays = function(days)
     return dat;
 }
 
-// Tehran is at 35°41′40″N 51°25′17″E
+function BadiDate(badi_year, badi_month, badi_day) {
+
+  /** Year 1 is 1844 */
+  this.year = badi_year;
+
+  /** Month 0 = Baha, ..., 17 = Mulk, 18 = Ayyam-i-Ha, 19 = Ala */
+  this.month = badi_month;
+
+  /** The day of the month, 1-indexed. */
+  this.day = badi_day;
+
+  /** The names of the months */
+  this.monthNames = [
+    "Bahá",
+    "Jalál",
+    "Jamál",
+    "‘Aẓamat",
+    "Núr",
+    "Raḥmat",
+    "Kalimát",
+    "Kamál",
+    "Asmá’",
+    "‘Izzat",
+    "Mashíyyat",
+    "‘Ilm",
+    "Qudrat",
+    "Qawl",
+    "Masá’il",
+    "Sharaf",
+    "Sulṭán",
+    "Mulk",
+    "Ayyám-i-Há",
+    "‘Alá’"
+  ]
+
+  this.toString = function() {
+    this.day + " " + this.monthNames[this.month] + " " + this.year;
+  }
+}
+
 var BadiData = {
+  // Tehran is at 35°41′40″N 51°25′17″E
   tehran_latitude: 35.6944,
-  tehran_longitude: 51.4215
-}
+  tehran_longitude: 51.4215,
 
-/** Returns the corresponding Badi year to Naw Ruz of this Gregorian Year */
-function gregorian_to_badi(gregorian_year) {
-  return (gregorian_year + 1) - 1844;
-}
+  holy_days: [
+    { name: "Naw Ruz",
+      month: 0, //baha
+      day: 1,
+      suspend: true },
+    { name: "First Day of Ridván",
+      month: 1, //jalal
+      day: 13,
+      suspend: true },
+    { name: "Ninth Day of Ridván",
+      month: 2, //jamal
+      day: 2,
+      suspend: true },
+    { name: "Twelfth Day of Ridván",
+      month: 2, //jamal
+      day: 5,
+      suspend: true },
+    { name: "Declaration of the Báb",
+      month: 3, //azamat
+      day: 8,
+      suspend: true },
+    { name: "Ascension of Bahá'u'lláh",
+      month: 3, //azamat
+      day: 13,
+      suspend: true },
+    { name: "Marytrdom of the Báb",
+      month: 5, //rahmat
+      day: 17,
+      suspend: true },
+    { name: "Day of the Covenant",
+      month: 13, //qawl
+      day: 4,
+      suspend: false },
+    { name: "Ascension of `Abdu'l-Bahá",
+      month: 13, //qawl
+      day: 6,
+      suspend: false }
+  ]
 
-/** Returns the gregorian year in which the corresponding Badi year starts */
-function badi_to_gregorian(badi_year) {
-  return 1844 + (badi_year - 1);
 }
 
 /** Returns sunset in Tehran on a given gregorian day */
@@ -27,9 +97,9 @@ function tehran_sunset(date) {
 
   // Get UTC hours of Sunset
   var sunset = SunRiseSet(
-                date.getFullYear(),
-                date.getMonth()+1,
-                date.getDate(),
+                date.getUTCFullYear(),
+                date.getUTCMonth()+1,
+                date.getUTCDate(),
                 BadiData.tehran_latitude,
                 BadiData.tehran_longitude)[1];
 
@@ -39,9 +109,9 @@ function tehran_sunset(date) {
 
   // When we put this information into a date, it treats it as local time
   var sunset_utc = new Date(Date.UTC(
-                date.getFullYear(),
-                date.getMonth(),
-                date.getDate(),
+                date.getUTCFullYear(),
+                date.getUTCMonth(),
+                date.getUTCDate(),
                 sunset_hours,
                 sunset_minutes,
                 sunset_seconds));
@@ -58,7 +128,7 @@ function find_naw_ruz(gregorian_year) {
   // better than one minute, and don't give us the right answer. The
   // UHJ has said that Naw Ruz this day is on the 21st.
   if(gregorian_year == 2026) {
-    return new Date(2026, 2, 21);
+    return new Date(Date.UTC(2026, 2, 21));
   }
 
   // Step 1: find UTC time of the equinox
@@ -70,7 +140,10 @@ function find_naw_ruz(gregorian_year) {
   //$('#output').append("sunset_utc: " + sunset_utc.toUTCString() + "<br />");
 
   // Step 3: find the final day
-  var sunset_day = new Date(equinox_utc.getFullYear(), equinox_utc.getMonth(), equinox_utc.getDate());
+  var sunset_day = new Date(Date.UTC(
+    equinox_utc.getUTCFullYear(), 
+    equinox_utc.getUTCMonth(), 
+    equinox_utc.getUTCDate()));
   if(equinox_utc < sunset_utc) {
     // If equinox before sunset, we take the gregorian date from the day of sunset
     return sunset_day;
@@ -102,6 +175,29 @@ function find_month_start(badi_year, badi_month) {
 /** Gets the Gregorian date of a particular Badi day.  Note: month is 0-indexed, day is 1-indexed. */
 function find_day(badi_year, badi_month, badi_day) {
   return find_month_start(badi_year, badi_month).addDays(badi_day-1);
+}
+
+function badi_year_to_gregorian_year(year) {
+  return (year - 1) + 1844;
+}
+
+function badi_to_gregorian(badi) {
+
+  if(badi.month < 19) {
+    // normal computation, including for Ayyam-i-Ha
+    var gregorian_start = badi_year_to_gregorian_year(badi.year);
+    var naw_ruz = find_naw_ruz(gregorian_start);
+    var add_days = badi_month*19 + badi.day;
+    return naw_ruz.addDays(add_days);
+  } else if (badi_month == 19) {
+    // month of `Ala (the fast): compute from next gregorian year
+    var gregorian_end = badi_to_gregorian(badi.year + 1);
+    var naw_ruz = find_naw_ruz(gregorian_end);
+    var add_days = -19 + badi.day;
+    return naw_ruz.addDays(add_days);
+  } 
+
+  throw "Got invalid Badi month " + badi.month;
 }
 
 /** Takes a date and returns the date of the next new moon */
@@ -150,77 +246,23 @@ function find_birthdays(gregorian_year) {
     last_day = last_day.addDays(2);
   }
 
-  var ret_date = new Date(last_day.getFullYear(), last_day.getMonth(), last_day.getDate());
+  var ret_date = new Date(Date.UTC(
+    last_day.getUTCFullYear(), 
+    last_day.getUTCMonth(), 
+    last_day.getUTCDate()));
   return ret_date;
 
 }
 
-var holy_days = [
-  { name: "Naw Ruz",
-    month: 0, //baha
-    day: 1,
-    suspend: true },
-  { name: "First Day of Ridván",
-    month: 1, //jalal
-    day: 13,
-    suspend: true },
-  { name: "Ninth Day of Ridván",
-    month: 2, //jamal
-    day: 2,
-    suspend: true },
-  { name: "Twelfth Day of Ridván",
-    month: 2, //jamal
-    day: 5,
-    suspend: true },
-  { name: "Declaration of the Báb",
-    month: 3, //azamat
-    day: 8,
-    suspend: true },
-  { name: "Ascension of Bahá'u'lláh",
-    month: 3, //azamat
-    day: 13,
-    suspend: true },
-  { name: "Marytrdom of the Báb",
-    month: 5, //rahmat
-    day: 17,
-    suspend: true },
-  { name: "Day of the Covenant",
-    month: 13, //qawl
-    day: 4,
-    suspend: false },
-  { name: "Ascension of `Abdu'l-Bahá",
-    month: 13, //qawl
-    day: 6,
-    suspend: false }
-]
 
-var months = [
-  "Bahá",
-  "Jalál",
-  "Jamál",
-  "`Azamat",
-  "Núr",
-  "Rahmat",
-  "Kalimát",
-  "Kamál",
-  "Asmá`",
-  "`Izzat",
-  "Mashíyyat",
-  "`Ilm",
-  "Qudrat",
-  "Qawl",
-  "Masá'il",
-  "Sharaf",
-  "Sultán",
-  "Mulk",
-  "`Alá'"
-]
+
+
 
 /** Find all the important days in Gregorian date range */
 function find_days(start_date, end_date) {
   // 1. find start/end badi years
-  var start_year = gregorian_to_badi(start_date.getFullYear()) - 1;
-  var end_year = gregorian_to_badi(end_date.getFullYear()) + 1;
+  var start_year = gregorian_to_badi(start_date.getUTCFullYear()) - 1;
+  var end_year = gregorian_to_badi(end_date.getUTCFullYear()) + 1;
 
   var days = []
 
@@ -270,7 +312,10 @@ function find_days(start_date, end_date) {
 
 /** Get text representation of a "day" */
 function day_to_string(day) {
-  var end = new Date(day.date.getFullYear(), day.date.getMonth(), day.date.getDate());
+  var end = new Date(Date.UTC(
+    day.date.getUTCFullYear(), 
+    day.date.getUTCMonth(), 
+    day.date.getUTCDate()));
   var start = end.addDays(-1);
   return day.name + ": sunset of " + start.toLocaleDateString() + " to sunset of " + end.toLocaleDateString(); 
 }
