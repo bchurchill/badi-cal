@@ -174,7 +174,7 @@ function test_nawruz() {
   for(var i = 0; i < naw_ruz.length; i++) {
     var expected = new Date(naw_ruz[i] + " 00:00 UTC");
     var year = expected.getFullYear();
-    var actual = find_naw_ruz(year);
+    var actual = BadiCal.find_naw_ruz(year);
     if(expected.getTime() == actual.getTime()) {
       success("Naw-Ruz correct for " + year + ".");
     } else {
@@ -182,9 +182,9 @@ function test_nawruz() {
     }
 
     // alternate way of computing naw ruz with badi_to_gregorian
-    var badi_year = gregorian_year_to_badi(year);
-    var badi_day = new BadiDate(badi_year, 0, 1);
-    var gregorian_day = badi_to_gregorian(badi_day);
+    var badi_year = BadiCal.gregorian_year_to_badi(year);
+    var badi_day = new BadiCal.BadiDate(badi_year, 0, 1);
+    var gregorian_day = BadiCal.badi_to_gregorian(badi_day);
     if(expected.getTime() == gregorian_day.getTime()) {
       success("Cross-checked with badi_to_gregorian");
     } else {
@@ -200,7 +200,7 @@ function test_birthdays() {
   for(var i = 0; i < birthdays.length; i++) {
     var expected = new Date(birthdays[i] + " 00:00 UTC");
     var year = expected.getFullYear();
-    var actual = find_birthdays(year);
+    var actual = BadiCal.find_birthdays(year);
     if(expected.getTime() == actual.getTime()) {
       success("Twin birthdays correct for " + year + ".");
     } else {
@@ -224,8 +224,8 @@ function test_inverses() {
     random_date.setUTCSeconds(0);
     random_date.setUTCMilliseconds(0);
 
-    var badi = gregorian_to_badi(random_date);
-    var orig = badi_to_gregorian(badi);
+    var badi = BadiCal.gregorian_to_badi(random_date);
+    var orig = BadiCal.badi_to_gregorian(badi);
     if(orig.getTime() == random_date.getTime()) {
       success(random_date.toUTCString() + " converted to " + badi.toString() + " and back.");
     } else {
@@ -235,6 +235,46 @@ function test_inverses() {
   finish();
 }
 
+function test_find_days() {
+
+  header("Smoke Test for BadiCal.find_days()");
+  d1 = new Date("23 March 2015 00:00:00 UTC");
+  d2 = new Date("1 December 2015 00:00:00 UTC");
+  var actual = BadiCal.find_days(d1, d2).map(function(x) { return x.toString() }).join("\n");
+
+  var expected = "1 Jalál 172: sunset of 4/8/2015 to sunset of 4/9/2015\n\
+First Day of Ridván: sunset of 4/20/2015 to sunset of 4/21/2015\n\
+1 Jamál 172: sunset of 4/27/2015 to sunset of 4/28/2015\n\
+Ninth Day of Ridván: sunset of 4/28/2015 to sunset of 4/29/2015\n\
+Twelfth Day of Ridván: sunset of 5/1/2015 to sunset of 5/2/2015\n\
+1 ‘Aẓamat 172: sunset of 5/16/2015 to sunset of 5/17/2015\n\
+Declaration of the Báb: sunset of 5/23/2015 to sunset of 5/24/2015\n\
+Ascension of Bahá’u’lláh: sunset of 5/28/2015 to sunset of 5/29/2015\n\
+1 Núr 172: sunset of 6/4/2015 to sunset of 6/5/2015\n\
+1 Raḥmat 172: sunset of 6/23/2015 to sunset of 6/24/2015\n\
+Marytrdom of the Báb: sunset of 7/9/2015 to sunset of 7/10/2015\n\
+1 Kalimát 172: sunset of 7/12/2015 to sunset of 7/13/2015\n\
+1 Kamál 172: sunset of 7/31/2015 to sunset of 8/1/2015\n\
+1 Asmá’ 172: sunset of 8/19/2015 to sunset of 8/20/2015\n\
+1 ‘Izzat 172: sunset of 9/7/2015 to sunset of 9/8/2015\n\
+1 Mashíyyat 172: sunset of 9/26/2015 to sunset of 9/27/2015\n\
+1 ‘Ilm 172: sunset of 10/15/2015 to sunset of 10/16/2015\n\
+1 Qudrat 172: sunset of 11/3/2015 to sunset of 11/4/2015\n\
+Birth of the Báb: sunset of 11/12/2015 to sunset of 11/13/2015\n\
+Birth of Bahá’u’lláh: sunset of 11/13/2015 to sunset of 11/14/2015\n\
+1 Qawl 172: sunset of 11/22/2015 to sunset of 11/23/2015\n\
+Day of the Covenant: sunset of 11/25/2015 to sunset of 11/26/2015\n\
+Ascension of ‘Abdu’l-Bahá: sunset of 11/27/2015 to sunset of 11/28/2015"
+
+  if(actual == expected) {
+    success("We're go for launch!");
+  } else {
+    failure("Huston, we have a problem.");
+  }
+  finish();
+
+}
+
 // STARTUP
 
 $(window).load(function() {
@@ -242,6 +282,7 @@ $(window).load(function() {
   test_nawruz();
   test_birthdays();
   test_inverses();
+  test_find_days();
 });
 </script>
 </head>
