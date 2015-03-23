@@ -52,6 +52,15 @@ function tehran_sunset(date) {
 /** Gets the day of Naw Ruz in a given gregorian year */
 function find_naw_ruz(gregorian_year) {
 
+  // Step 0: Follow to the UHJ
+  // In 2026, the equinox is less than a minute from sunset. The
+  // algorithms from Meeus which we're using don't give accuraccy
+  // better than one minute, and don't give us the right answer. The
+  // UHJ has said that Naw Ruz this day is on the 21st.
+  if(gregorian_year == 2026) {
+    return new Date(2026, 2, 21);
+  }
+
   // Step 1: find UTC time of the equinox
   var equinox_utc = vernal_equinox(gregorian_year);
   //$('#output').append("equinox: " + equinox_utc.toUTCString() + "<br />");
@@ -60,6 +69,7 @@ function find_naw_ruz(gregorian_year) {
   var sunset_utc = tehran_sunset(equinox_utc);
   //$('#output').append("sunset_utc: " + sunset_utc.toUTCString() + "<br />");
 
+  // Step 3: find the final day
   var sunset_day = new Date(equinox_utc.getFullYear(), equinox_utc.getMonth(), equinox_utc.getDate());
   if(equinox_utc < sunset_utc) {
     // If equinox before sunset, we take the gregorian date from the day of sunset
