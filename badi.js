@@ -148,7 +148,7 @@ var BadiCal = {
     }
 
     // Step 1: find UTC time of the equinox
-    var equinox_utc = vernal_equinox(gregorian_year);
+    var equinox_utc = EquinoxCalc.vernal_equinox(gregorian_year);
     //$('#output').append("equinox: " + equinox_utc.toUTCString() + "<br />");
 
     // Step 2: find Tehran's sunset on the day of the equinox
