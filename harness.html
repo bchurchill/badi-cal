@@ -132,6 +132,7 @@ var	birthdays = [
 
 var success_count = 0;
 var failure_count = 0;
+var any_failure = false;
 
 function start() {
   $("#output").append("<ul>");
@@ -150,6 +151,7 @@ function finish() {
 
 function failure(m) {
   failure_count = failure_count + 1;
+  any_failure = true;
   $("#output").append("<li class='fail'>" + m + "</li>");
 }
 
@@ -164,6 +166,14 @@ function info(m) {
 
 function header(m) {
   $("#output").append("</ul><h3>" + m + "</h3><ul>");
+}
+
+function report() {
+  if(any_failure) {
+    $("#top").append("<h2 class='fail'>Tests Failed!</h2>");
+  } else {
+    $("#top").append("<h2 class='success'>All Tests Passed!</h2>");
+  }
 }
 
 // TESTS
@@ -283,11 +293,14 @@ $(window).load(function() {
   test_birthdays();
   test_inverses();
   test_find_days();
+  report();
 });
 </script>
 </head>
 <body>
 <h1>Badi Calendar Tests</h1>
+<div id="top">
+</div>
 <div id="output">
 </div>
 </body>

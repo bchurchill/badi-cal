@@ -112,7 +112,7 @@ var BadiCal = {
   tehran_sunset: function (date) {
 
     // Get UTC hours of Sunset
-    var sunset = SunRiseSet(
+    var sunset = BlueYonder.SunRiseSet(
                   date.getUTCFullYear(),
                   date.getUTCMonth()+1,
                   date.getUTCDate(),
@@ -252,14 +252,14 @@ var BadiCal = {
   next_new_moon: function(date, min) {
     
     // 1. Find the new moon during cycle 'date'
-    var quarters = MoonQuarters(
+    var quarters = BlueYonder.MoonQuarters(
       date.getUTCFullYear(), 
       date.getUTCMonth()+1, 
       date.getUTCDate(), 
       0
     );
 
-    var new_moon = jdtocd(quarters[0]);
+    var new_moon = BlueYonder.jdtocd(quarters[0]);
 
     var new_moon_date = new Date(Date.UTC(
       new_moon[0],

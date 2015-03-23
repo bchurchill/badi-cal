@@ -9,11 +9,18 @@ For Bahá'ís trying to figure out:
 
 ## Status
 
-Work in progress.  The backend functionality is present: it can take a range of gregorian dates and return the significant dates in the Badi calendar.  
+Work in progress. The backend functionality is present and seems
+robust: it can take a range of gregorian dates and return the
+significant dates in the Badi calendar.
 
 Work to be done:
  * Create the user interface
- * Put dependencies in namespaces (they're kind of spaghetti code right now)
+
+## Code
+
+ * The extern/ folder has javascript to compute equinoxes, new moons, and sunrise/sunset times
+ * `badi.js` is where the backend fun is: it defines a `BadiDate` class and functions `gregorian_to_badi`, `badi_to_gregorian` for converting JavaScript's built-in `Date` objects.
+ * harness.html runs several tests against the backend
 
 ## Specs
 
