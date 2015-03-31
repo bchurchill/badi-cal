@@ -123,6 +123,11 @@ var BadiCal = {
       return this.day + " " + this.monthNames[this.month] + " " + this.year;
     }
 
+    /** Print text representation of the month. */
+    this.monthToString = function() {
+      return this.monthNames[this.month];
+    }
+
     /** Compare.  Returns negative if 'this' comes before 'other', zero if same,
      * positive if 'this' comes after 'other'. */
     this.compare = function(other) {
@@ -370,7 +375,7 @@ var BadiCal = {
       for(var i = 0; i <= 19; i++) {
         var badi_day = new BadiCal.BadiDate(badi_year, i, 1);
         var greg_day = BadiCal.badi_to_gregorian(badi_day);
-        var day = new BadiCal.DayUIObj(badi_day.toString(), greg_day, badi_day, "Feast Day");
+        var day = new BadiCal.DayUIObj("Start of " + badi_day.monthToString(), greg_day, badi_day, "Feast Day");
         days.push(day);
       }
 

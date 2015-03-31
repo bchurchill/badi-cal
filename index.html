@@ -1,0 +1,55 @@
+<html>
+<head>
+<title>Badi Calendar</title>
+<meta charset="UTF-8">
+<link href="style.css" rel="stylesheet">
+<script src="extern/stellafane.js"></script>
+<script src="extern/blueyonder.js"></script>
+<script src="badi.js" charset="utf-8"></script>
+<script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+<script>
+
+function update_dates(d1, d2) {
+  var days = BadiCal.find_days(d1, d2);
+  var s = "";
+  s = s + "<table class='result_tab'>";
+  s = s + "<tr class='entry_row'><th class='entry_col'></th><th class='entry_col'>Start</th><th class='entry_col'>End</td><th class='entry_col'>Badi Date</td></th>";
+  for(var i = 0; i < days.length; i++) {
+    var mydate = new Date(days[i].date.getTime() + days[i].date.getTimezoneOffset()*60*1000);
+    s = s + "<tr class='entry_row'>";
+    s = s + "<td class='entry_col'>" + days[i].title + "</td>";
+    s = s + "<td class='entry_col'>" + mydate.addDays(-1).toLocaleDateString() + "</td>";
+    s = s + "<td class='entry_col'>" + mydate.toLocaleDateString() + "</td>";
+    s = s + "<td class='entry_col'>" + days[i].badi_date.toString() + "</td>";
+    s = s + "</tr>";
+  }
+  $('#results').append("</table>");
+  $('#results').empty();
+  $('#results').append(s);
+}
+
+
+
+$(window).load(function() {
+
+    // Set initial date range
+
+  // Set handler for date picker
+
+  // Initialize
+  var d1 = new Date();
+  var d2 = (new Date()).addDays(90);
+  update_dates(d1, d2);
+
+  
+});
+</script>
+</head>
+<body>
+<div id='main'>
+<div id='date-range'>
+</div> <!-- end date range -->
+<div id='results'>
+</div> <!-- end results -->
+</div> <!-- main -->
+</body>

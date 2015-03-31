@@ -1,0 +1,35 @@
+#results {
+  margin-top: 100px;
+  padding-bottom: 10px;
+  padding-top: 10px;
+  text-align: center;
+}
+
+.entry {
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+table.result_tab {
+  margin: auto;
+  border: 1px solid black;
+  padding: 25px;
+  text-align: center;
+  border-radius: 10px;
+}
+
+th.entry_col {
+  font-weight: normal;
+  text-decoration: underline;
+  padding: 10px;
+  margin: 10px;
+  width: 25%;
+}
+
+td.entry_col {
+  padding: 10px;
+  margin: 10px;
+  width: 25%;
+}
