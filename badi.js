@@ -30,6 +30,21 @@ Date.prototype.addDays = function(days)
     return dat;
 }
 
+/** Adjust a Date object by the user's timezone offset */
+Date.prototype.adjustDay = function() {
+  // Typically, if you look at a date object, it gives you the time
+  // and day in UTC. If you want to extract the mm/dd/yyyy date from
+  // such an object, you need to be careful to make sure you get the
+  // date from the right timezone, because it's different in different
+  // places. This method adjusts a date object as follows: it moves
+  // it into the forward or the past, so that the day in UTC matches
+  // what the day in localtime originally was. This way, if you want
+  // to find what day of the month it is in localtime (for example)
+  // you can compute someDate.adjustDay().getDay(), and it will give
+  // your the right one. </oof>
+  return new Date(this.getTime() + this.getTimezoneOffset()*60*1000);
+}
+
 /** Various data used by this application */
 var BadiData = {
   // Tehran is at 35°41′40″N 51°25′17″E
@@ -333,22 +348,17 @@ var BadiCal = {
 
 
   /** Constructs an object that we'll render in the UI, somehow */
-  DayUIObj: function(title, date, badi_date, type) {
+  DayUIObj: function(title, start_date, end_date, badi_date, type) {
     this.title = title;
-    this.date = date;
+    this.start_date = start_date.adjustDay();
+    this.end_date = end_date.adjustDay();
     this.badi_date = badi_date;
     this.type = type;
 
     /** Get a simple text representation */
     this.toString = function() {
-
-      // Since we represent a day at 00:00:00 UTC, for displaying local time we 
-      // need to make sure we adjust the timezone 
-      mydate = new Date(this.date.getTime() + this.date.getTimezoneOffset()*60*1000);
-
-      return this.title + 
-              ": sunset of " + mydate.addDays(-1).toLocaleDateString() + 
-              " to sunset of " + mydate.toLocaleDateString(); 
+      return this.title + " from sunset of " + this.start_date.toLocaleDateString() +
+                          " to sunset of " + this.end_date.toLocaleDateString();
     }
   },
 
@@ -367,38 +377,45 @@ var BadiCal = {
         var holy_day = BadiData.holy_days[i];
         var badi_day = new BadiCal.BadiDate(badi_year, holy_day.month, holy_day.day);
         var greg_day = BadiCal.badi_to_gregorian(badi_day);
-        var day = new BadiCal.DayUIObj(holy_day.name, greg_day, badi_day, "Holy Day");
+        var day = new BadiCal.DayUIObj(holy_day.name, greg_day.addDays(-1), greg_day, badi_day, "Holy Day");
         days.push(day);
       }
 
       // 3. find the first day of each month
       for(var i = 0; i <= 19; i++) {
         var badi_day = new BadiCal.BadiDate(badi_year, i, 1);
-        var greg_day = BadiCal.badi_to_gregorian(badi_day);
-        var day = new BadiCal.DayUIObj("Start of " + badi_day.monthToString(), greg_day, badi_day, "Feast Day");
+        var greg_start = BadiCal.badi_to_gregorian(badi_day).addDays(-1);
+        if(i != 18) {
+          var greg_end = greg_start.addDays(19);
+          var day = new BadiCal.DayUIObj("Month of " + badi_day.monthToString(), greg_start, greg_end, badi_day, "Month");
+        } else {
+          var greg_end = BadiCal.badi_to_gregorian(new BadiCal.BadiDate(badi_year, i+1, 1)).addDays(-1);
+          var day = new BadiCal.DayUIObj("Ayyám-i-Há", greg_start, greg_end, badi_day, "Month");
+        }
         days.push(day);
+
       }
 
       // 4. Find Birth of the Báb and Birth of Bahá'u'lláh
       var bday = BadiCal.find_birthdays(BadiCal.badi_year_to_gregorian(badi_year));
       var badi_bday1 = BadiCal.gregorian_to_badi(bday);
       var badi_bday2 = BadiCal.gregorian_to_badi(bday.addDays(1));
-      var day1 = new BadiCal.DayUIObj("Birth of the Báb", bday, badi_bday1, "Holy Day");
-      var day2 = new BadiCal.DayUIObj("Birth of Bahá’u’lláh", bday.addDays(1), badi_bday2, "Holy Day");
+      var day1 = new BadiCal.DayUIObj("Birth of the Báb", bday.addDays(-1), bday, badi_bday1, "Holy Day");
+      var day2 = new BadiCal.DayUIObj("Birth of Bahá’u’lláh", bday.addDays(0), bday.addDays(1), badi_bday2, "Holy Day");
       days.push(day1);
       days.push(day2);
     }
 
     // 5. filter through these to find those that are actually in provided date range
     days = days.filter(function(day) {
-      return (start_date <= day.date.addDays(-1) && day.date <= end_date);
+      return (start_date <= day.start_date.addDays(-1) && day.start_date <= day.end_date);
     });
 
     // 6. sort by gregorian date
     days = days.sort(function(x, y) {
-      if (x.date.getTime() < y.date.getTime()) {
+      if (x.start_date.getTime() < y.start_date.getTime()) {
         return -1;
-      } else if (x.date.getTime() == y.date.getTime()) {
+      } else if (x.start_date.getTime() == y.start_date.getTime()) {
         return 0;
       } else {
         return 1;

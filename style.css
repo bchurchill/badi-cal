@@ -22,10 +22,20 @@ table.result_tab {
 
 th.entry_col {
   font-weight: normal;
-  text-decoration: underline;
   padding: 10px;
   margin: 10px;
   width: 25%;
+}
+
+p.underline {
+  text-decoration: underline;
+  margin: 2pt;
+}
+
+p.bold {
+  font-weight: bold;
+  margin: 2pt;
+
 }
 
 td.entry_col {

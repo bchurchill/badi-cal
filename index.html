@@ -13,13 +13,15 @@ function update_dates(d1, d2) {
   var days = BadiCal.find_days(d1, d2);
   var s = "";
   s = s + "<table class='result_tab'>";
-  s = s + "<tr class='entry_row'><th class='entry_col'></th><th class='entry_col'>Start</th><th class='entry_col'>End</td><th class='entry_col'>Badi Date</td></th>";
+  s = s + "<tr class='entry_row'><th class='entry_col'></th>";
+  s = s + "<th class='entry_col'><p class='underline'>Start</p><p class='bold'>(at sunset)</p></th>";
+  s = s + "<th class='entry_col'><p class='underline'>End</p><p class='bold'>(at sunset)</p></th>";
+  s = s + "<th class='entry_col'><p class='underline'>Badi Date</p></th></tr>";
   for(var i = 0; i < days.length; i++) {
-    var mydate = new Date(days[i].date.getTime() + days[i].date.getTimezoneOffset()*60*1000);
     s = s + "<tr class='entry_row'>";
     s = s + "<td class='entry_col'>" + days[i].title + "</td>";
-    s = s + "<td class='entry_col'>" + mydate.addDays(-1).toLocaleDateString() + "</td>";
-    s = s + "<td class='entry_col'>" + mydate.toLocaleDateString() + "</td>";
+    s = s + "<td class='entry_col'>" + days[i].start_date.toLocaleDateString() + "</td>";
+    s = s + "<td class='entry_col'>" + days[i].end_date.toLocaleDateString() + "</td>";
     s = s + "<td class='entry_col'>" + days[i].badi_date.toString() + "</td>";
     s = s + "</tr>";
   }
