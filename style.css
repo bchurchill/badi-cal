@@ -16,6 +16,7 @@
   padding-bottom: 10px;
   padding-top: 10px;
   text-align: center;
+  margin-bottom:100px;
 }
 
 #controls {
@@ -37,6 +38,7 @@
 
 table.result_tab {
   text-align: center;
+  margin: auto;
 }
 
 th.entry_col {
