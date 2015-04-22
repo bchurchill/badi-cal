@@ -43,3 +43,9 @@ td.entry_col {
   margin: 10px;
   width: 25%;
 }
+
+img.day_logo {
+  height: 20pt;
+  width: 20pt;
+  vertical-align: middle;
+}

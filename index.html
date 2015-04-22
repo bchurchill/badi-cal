@@ -19,7 +19,11 @@ function update_dates(d1, d2) {
   s = s + "<th class='entry_col'><p class='underline'>Badi Date</p></th></tr>";
   for(var i = 0; i < days.length; i++) {
     s = s + "<tr class='entry_row'>";
-    s = s + "<td class='entry_col'>" + days[i].title + "</td>";
+    s = s + "<td class='entry_col'>" + days[i].title;
+    if(days[i].type == "Holy Day - Work Suspended") {
+      s = s + "&nbsp;<img class='day_logo' src='img/star.svg' />"
+    }
+    s = s + "</td>";
     s = s + "<td class='entry_col'>" + days[i].start_date.toLocaleDateString() + "</td>";
     s = s + "<td class='entry_col'>" + days[i].end_date.toLocaleDateString() + "</td>";
     s = s + "<td class='entry_col'>" + days[i].badi_date.toString() + "</td>";
@@ -34,7 +38,7 @@ function update_dates(d1, d2) {
 
 $(window).load(function() {
 
-    // Set initial date range
+  // Set initial date range
 
   // Set handler for date picker
 
@@ -49,8 +53,6 @@ $(window).load(function() {
 </head>
 <body>
 <div id='main'>
-<div id='date-range'>
-</div> <!-- end date range -->
 <div id='results'>
 </div> <!-- end results -->
 </div> <!-- main -->

@@ -377,7 +377,8 @@ var BadiCal = {
         var holy_day = BadiData.holy_days[i];
         var badi_day = new BadiCal.BadiDate(badi_year, holy_day.month, holy_day.day);
         var greg_day = BadiCal.badi_to_gregorian(badi_day);
-        var day = new BadiCal.DayUIObj(holy_day.name, greg_day.addDays(-1), greg_day, badi_day, "Holy Day");
+        var label = (holy_day.suspend ? "Holy Day - Work Suspended" : "Holy Day")
+        var day = new BadiCal.DayUIObj(holy_day.name, greg_day.addDays(-1), greg_day, badi_day, label);
         days.push(day);
       }
 
@@ -400,8 +401,8 @@ var BadiCal = {
       var bday = BadiCal.find_birthdays(BadiCal.badi_year_to_gregorian(badi_year));
       var badi_bday1 = BadiCal.gregorian_to_badi(bday);
       var badi_bday2 = BadiCal.gregorian_to_badi(bday.addDays(1));
-      var day1 = new BadiCal.DayUIObj("Birth of the Báb", bday.addDays(-1), bday, badi_bday1, "Holy Day");
-      var day2 = new BadiCal.DayUIObj("Birth of Bahá’u’lláh", bday.addDays(0), bday.addDays(1), badi_bday2, "Holy Day");
+      var day1 = new BadiCal.DayUIObj("Birth of the Báb", bday.addDays(-1), bday, badi_bday1, "Holy Day - Work Suspended");
+      var day2 = new BadiCal.DayUIObj("Birth of Bahá’u’lláh", bday.addDays(0), bday.addDays(1), badi_bday2, "Holy Day - Work Suspended");
       days.push(day1);
       days.push(day2);
     }
