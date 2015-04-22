@@ -1,9 +1,32 @@
+
+/** Layout */
+
+
+.container {
+  margin: auto;
+  border: 1px solid black;
+  padding: 25px;
+  text-align: center;
+  border-radius: 10px;
+  width: 80%;
+}
+
 #results {
-  margin-top: 100px;
+  margin-top: 10px;
   padding-bottom: 10px;
   padding-top: 10px;
   text-align: center;
 }
+
+#controls {
+  margin-top: 70px;
+  border: 0px;
+  text-align: left;
+  padding: 0px;
+}
+
+
+/* Table formatting */
 
 .entry {
   padding-left: 10px;
@@ -13,11 +36,7 @@
 }
 
 table.result_tab {
-  margin: auto;
-  border: 1px solid black;
-  padding: 25px;
   text-align: center;
-  border-radius: 10px;
 }
 
 th.entry_col {
