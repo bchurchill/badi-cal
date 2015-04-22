@@ -9,6 +9,10 @@
 <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
 <script>
 
+function populate_select() {
+  
+}
+
 function update_dates(d1, d2) {
   var days = BadiCal.find_days(d1, d2);
   var s = "";
@@ -54,7 +58,12 @@ $(window).load(function() {
 <body>
 <noscript>Javascript must be enabled for this site.</noscript>
 <div id='main'>
-<div id='results'>
+<div id='controls' class='container'>
+<!--Set your location<br />
+Show dates from <select></select> to <select></select>-->
+<img class='day_logo' src='img/star.svg'> denotes work suspended for Holy Day
+</div>
+<div id='results' class='container'>
 </div> <!-- end results -->
 </div> <!-- main -->
 </body>
