@@ -357,7 +357,7 @@ var BadiCal = {
 
     /** Get a simple text representation */
     this.toString = function() {
-      return this.title + " from sunset of " + this.start_date.toLocaleDateString() +
+      return this.title + ": sunset of " + this.start_date.toLocaleDateString() +
                           " to sunset of " + this.end_date.toLocaleDateString();
     }
   },

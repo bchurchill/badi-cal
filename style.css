@@ -70,3 +70,7 @@ img.day_logo {
   width: 20pt;
   vertical-align: middle;
 }
+
+.shadow {
+  color: #888888;
+}
