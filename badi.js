@@ -409,7 +409,8 @@ var BadiCal = {
 
     // 5. filter through these to find those that are actually in provided date range
     days = days.filter(function(day) {
-      return (start_date <= day.start_date.addDays(-1) && day.start_date <= end_date);
+      return (start_date <= day.start_date && day.start_date <= end_date ||
+              start_date <= day.end_date && day.end_date <= end_date);
     });
 
     // 6. sort by gregorian date
