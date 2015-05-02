@@ -3,15 +3,13 @@
 <title>Badi Calendar</title>
 <meta charset="UTF-8">
 <link href="style.css" rel="stylesheet">
+ <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 <script src="extern/stellafane.js"></script>
 <script src="extern/blueyonder.js"></script>
 <script src="badi.js" charset="utf-8"></script>
-<script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+<script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
 <script>
-
-function populate_select() {
-  
-}
 
 function update_dates(d1, d2) {
   var days = BadiCal.find_days(d1, d2);
@@ -28,7 +26,11 @@ function update_dates(d1, d2) {
       s = s + "&nbsp;<img class='day_logo' src='img/star.svg' />"
     }
     s = s + "</td>";
-    s = s + "<td class='entry_col'>" + days[i].start_date.toLocaleDateString() + "</td>";
+    if(days[i].type.substr(0,8) == "Holy Day") {
+      s = s + "<td class='entry_col shadow'>" + days[i].start_date.toLocaleDateString() + "</td>";
+    } else {
+      s = s + "<td class='entry_col'>" + days[i].start_date.toLocaleDateString() + "</td>";
+    }
     s = s + "<td class='entry_col'>" + days[i].end_date.toLocaleDateString() + "</td>";
     s = s + "<td class='entry_col'>" + days[i].badi_date.toString() + "</td>";
     s = s + "</tr>";
@@ -38,16 +40,76 @@ function update_dates(d1, d2) {
   $('#results').append(s);
 }
 
+function range_change_handler() {
+  var value = $('#range_select').val()
+  if(value == "90") {
+    $('#custom_range').hide();
+    var d1 = new Date().addDays(-1);
+    var d2 = (new Date()).addDays(90);
+    update_dates(d1, d2);
+  } else if (value == "this_year") {
+    $('#custom_range').hide();
+    var d= new Date();
+    var d1 = new Date(d.getFullYear(), 0, 1);
+    var d2 = new Date(d.getFullYear()+1, 0, 1);
+    update_dates(d1, d2);
+  } else if (value == "next_year") {
+    $('#custom_range').hide();
+    var d = new Date();
+    var d1 = new Date(d.getFullYear()+1, 0, 1);
+    var d2 = new Date(d.getFullYear()+2, 0, 1);
+    update_dates(d1, d2);
+  } else if (value == "custom") {
+    $('#custom_range').show();
+
+  }
+}
+
+function update_custom_dates() {
+    var d1 = $('#custom_from').datepicker("getDate");
+    var d2 = $('#custom_to').datepicker("getDate");
+    update_dates(d1, d2);
+    if(d1.getFullYear() < 2015 ||
+       d2.getFullYear() > 2064) {
+      $('#warning').show()
+    } else {
+      $('#warning').hide()
+    }
+}
 
 
-$(window).load(function() {
 
-  // Set initial date range
+$(document).ready(function() {
 
   // Set handler for date picker
+  $('#range_select').selectmenu({
+    change: range_change_handler  
+  });
+
+  // Setup custom ranges
+  $('#custom_range').hide();
+  $('#warning').hide();
+  $('#custom_from').datepicker({
+    defaultDate: "+0d",
+    changeMonth: true,
+    changeYear: true,
+    onClose: function(selectedDate) {
+      $('#custom_to').datepicker("option", "minDate", selectedDate)
+    },
+    onSelect: update_custom_dates
+  });
+  $('#custom_to').datepicker({
+    defaultDate: "+90d",
+    changeMonth: true,
+    changeYear: true,
+    onClose: function(selectedDate) {
+      $('#custom_from').datepicker("option", "maxDate", selectedDate)
+    },
+    onSelect: update_custom_dates
+  });
 
   // Initialize
-  var d1 = new Date();
+  var d1 = new Date().addDays(-1);
   var d2 = (new Date()).addDays(90);
   update_dates(d1, d2);
 
@@ -61,7 +123,18 @@ $(window).load(function() {
 <div id='controls' class='container'>
 <!--Set your location<br />
 Show dates from <select></select> to <select></select>-->
-<img class='day_logo' src='img/star.svg'> denotes work suspended for Holy Day
+<img class='day_logo' src='img/star.svg'> denotes work suspended for Holy Day<br /><br />
+<select id="range_select">
+<option value='90'>Upcoming 90 days</option>
+<option value='this_year'>This Gregorian year</option>
+<option value='next_year'>Next Gregorian year</option>
+<option value='custom'>Custom</option>
+</select><br />
+<div id='custom_range'>
+<label for="custom_from">From</label><input type="text" id="custom_from">
+<label for="custom_to">To</label><input type="text" id="custom_to">
+<h4 id='warning'>Dates before 2015 or after 2064 are estimates and not approved by the Universal House of Justice.</h4>
+</div>
 </div>
 <div id='results' class='container'>
 </div> <!-- end results -->
