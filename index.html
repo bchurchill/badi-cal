@@ -10,6 +10,15 @@
 <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
 <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
 <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-37863653-2', 'auto');
+  ga('send', 'pageview');
+</script>
+<script>
 
 function update_dates(d1, d2) {
   var days = BadiCal.find_days(d1, d2);
@@ -139,4 +148,9 @@ Show dates from <select></select> to <select></select>-->
 <div id='results' class='container'>
 </div> <!-- end results -->
 </div> <!-- main -->
+<br />
+<br />
+<br />
+<a href="https://github.com/bchurchill/badi-cal">Visit GitHub Project</a><br />
+Copyright 2015 Berkeley Churchill.  This is not an official site of any <a href="http://www.bahai.org">Bahá'í</a> institution.
 </body>
