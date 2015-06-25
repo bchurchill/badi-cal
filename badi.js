@@ -1,17 +1,17 @@
 // The MIT License (MIT)
-// 
+//
 // Copyright (c) 2015 Berkeley Churchill
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -76,7 +76,7 @@ var BadiData = {
       month: 3, //azamat
       day: 13,
       suspend: true },
-    { name: "Marytrdom of the Báb",
+    { name: "Martyrdom of the Báb",
       month: 5, //rahmat
       day: 17,
       suspend: true },
@@ -96,7 +96,7 @@ var BadiData = {
 var BadiCal = {
 
   /** Construct a date on the Badi Calendar.  Objects of this class
-   * just have a 'year', 'month' and 'day' field, along with some 
+   * just have a 'year', 'month' and 'day' field, along with some
    * helper functions and extra data (e.g. names of the months) */
   BadiDate: function (badi_year, badi_month, badi_day) {
 
@@ -199,8 +199,8 @@ var BadiCal = {
 
     // Step 3: find the final day
     var sunset_day = new Date(Date.UTC(
-      equinox_utc.getUTCFullYear(), 
-      equinox_utc.getUTCMonth(), 
+      equinox_utc.getUTCFullYear(),
+      equinox_utc.getUTCMonth(),
       equinox_utc.getUTCDate()));
     if(equinox_utc < sunset_utc) {
       // If equinox before sunset, we take the gregorian date from the day of sunset
@@ -235,12 +235,12 @@ var BadiCal = {
       var naw_ruz = BadiCal.find_naw_ruz(gregorian_end);
       var add_days = badi.day - 19 - 1;
       return naw_ruz.addDays(add_days);
-    } 
+    }
 
     throw "Got invalid Badi month " + badi.month;
   },
 
-  /** Takes a Date and returns a BadiDate.  We disregard the time and 
+  /** Takes a Date and returns a BadiDate.  We disregard the time and
    * consider the date to be at 00:00:00. UTC This function is designed
    * to be an inverse of badi_to_gregorian for all inputs. */
   gregorian_to_badi: function (date) {
@@ -269,7 +269,7 @@ var BadiCal = {
       // Day offset from beginning of Ayyam-i-Ha / end of Mulk
       var after_mulk = diff - 18*19;
 
-      // need to get next Naw-Ruz and count backward 
+      // need to get next Naw-Ruz and count backward
       var next_naw_ruz = BadiCal.find_naw_ruz(gregorian_year + 1);
       var year_length = (next_naw_ruz - naw_ruz)/(1000*60*60*24);
       var ayyam_days = year_length - 19*19;
@@ -287,17 +287,17 @@ var BadiCal = {
 
   /** Takes a date and returns the date of the next new moon.
    *  This function is recursive.  A client should call this function with two
-   *  identical parameters.  
+   *  identical parameters.
    *
-   *  The detailed contract is this: find the first new moon during or after 
+   *  The detailed contract is this: find the first new moon during or after
    *  the lunar cycle containing 'date' but occurring after the time 'min'. */
   next_new_moon: function(date, min) {
-    
+
     // 1. Find the new moon during cycle 'date'
     var quarters = BlueYonder.MoonQuarters(
-      date.getUTCFullYear(), 
-      date.getUTCMonth()+1, 
-      date.getUTCDate(), 
+      date.getUTCFullYear(),
+      date.getUTCMonth()+1,
+      date.getUTCDate(),
       0
     );
 
@@ -339,8 +339,8 @@ var BadiCal = {
     }
 
     var ret_date = new Date(Date.UTC(
-      last_day.getUTCFullYear(), 
-      last_day.getUTCMonth(), 
+      last_day.getUTCFullYear(),
+      last_day.getUTCMonth(),
       last_day.getUTCDate()));
     return ret_date;
 
