@@ -46,12 +46,16 @@ Date.prototype.adjustDay = function() {
 }
 
 /** Various data used by this application */
-var BadiData = {
-  // Tehran is at 35°41′40″N 51°25′17″E
-  tehran_latitude: 35.6944,
-  tehran_longitude: 51.4215,
+var BadiData = (function() {
+  var data = {}
 
-  holy_days: [
+  // Tehran is at 35°41′40″N 51°25′17″E
+  data.tehran_latitude = 35.6944;
+  data.tehran_longitude = 51.4215;
+  data.tehran = { "latitude": data.tehran_latitude,
+                  "longitude": data.tehran_longitude };
+
+  data.holy_days = [
     { name: "Naw Ruz",
       month: 0, //baha
       day: 1,
@@ -90,15 +94,22 @@ var BadiData = {
       suspend: false }
   ]
 
-}
+  return data;
+}());
+
 
 // just one giant namespace
 var BadiCal = {
 
+  Location: function(latitude, longitude) {
+    this.latitude = latitude;
+    this.longitude = longitude;
+  },
+
   /** Construct a date on the Badi Calendar.  Objects of this class
    * just have a 'year', 'month' and 'day' field, along with some
    * helper functions and extra data (e.g. names of the months) */
-  BadiDate: function (badi_year, badi_month, badi_day) {
+  BadiDate: function (badi_year, badi_month, badi_day, hours_after_sunset, place) {
 
     /** Year 1 is 1844 */
     this.year = badi_year;
@@ -108,6 +119,12 @@ var BadiCal = {
 
     /** The day of the month, 1-indexed. */
     this.day = badi_day;
+
+    /** The number of hours past sunset */
+    this.hours = hours_after_sunset
+
+    /** The location ("timezone") for this time */
+    this.place = place;
 
     /** The names of the months */
     this.monthNames = [
@@ -150,21 +167,21 @@ var BadiCal = {
     }
   },
 
- /** Returns sunset in Tehran on a given gregorian day */
+  /** Returns sunset in Tehran on a given gregorian day */
   tehran_sunset: function (date) {
-    return BadiCal.find_sunset(date, BadiData.tehran_latitude, BadiData.tehran_longitude);
+    return BadiCal.find_sunset(date, BadiData.tehran);
   },
 
   /** Returns sunset on a given gregorian day */
-  find_sunset: function (date, latitude, longitude) {
+  find_sunset: function (date, place) {
 
     // Get UTC hours of Sunset
     var sunset = BlueYonder.SunRiseSet(
                   date.getUTCFullYear(),
                   date.getUTCMonth()+1,
                   date.getUTCDate(),
-                  latitude,
-                  longitude)[1];
+                  place.latitude,
+                  place.longitude)[1];
 
     var sunset_hours = Math.floor(sunset);
     var sunset_minutes = Math.floor((sunset - sunset_hours)*60);
