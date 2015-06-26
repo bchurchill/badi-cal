@@ -150,16 +150,21 @@ var BadiCal = {
     }
   },
 
-  /** Returns sunset in Tehran on a given gregorian day */
+ /** Returns sunset in Tehran on a given gregorian day */
   tehran_sunset: function (date) {
+    return BadiCal.find_sunset(date, BadiData.tehran_latitude, BadiData.tehran_longitude);
+  },
+
+  /** Returns sunset on a given gregorian day */
+  find_sunset: function (date, latitude, longitude) {
 
     // Get UTC hours of Sunset
     var sunset = BlueYonder.SunRiseSet(
                   date.getUTCFullYear(),
                   date.getUTCMonth()+1,
                   date.getUTCDate(),
-                  BadiData.tehran_latitude,
-                  BadiData.tehran_longitude)[1];
+                  latitude,
+                  longitude)[1];
 
     var sunset_hours = Math.floor(sunset);
     var sunset_minutes = Math.floor((sunset - sunset_hours)*60);
