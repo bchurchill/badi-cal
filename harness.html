@@ -217,12 +217,17 @@ function test_nawruz() {
 
     // alternate way of computing naw ruz with badi_to_gregorian
     var badi_year = BadiCal.gregorian_year_to_badi(year);
-    var badi_day = new BadiCal.BadiDate(badi_year, 0, 1);
-    var gregorian_day = BadiCal.badi_to_gregorian(badi_day);
+    var badi_day = new BadiCal.BadiDate(badi_year, 0, 1, 0, BadiData.tehran);
+    var gregorian_day = BadiCal.badi_to_gregorian(badi_day, BadiData.tehran);
+    gregorian_day = gregorian_day.addDays(1);
+    gregorian_day.setUTCHours(0);
+    gregorian_day.setUTCMinutes(0);
+    gregorian_day.setUTCSeconds(0);
+    gregorian_day.setUTCMilliseconds(0);
     if(expected.getTime() == gregorian_day.getTime()) {
       success("Cross-checked with badi_to_gregorian");
     } else {
-      failure("badi_to_gregorian cross check failed with " + badi_day.toString() + " and " + actual.toUTCString() + " but expected " + actual.toUTCString());
+      failure("badi_to_gregorian cross check failed for " + badi_day.toString() + ".  Expected " + expected.toUTCString() + " but got " + gregorian_day.toUTCString());
     }
   }
   finish();
@@ -253,17 +258,19 @@ function test_inverses() {
     // Pick a date in the next n years
     var random_date = new Date();
     random_date = new Date(random_date.getTime() + Math.random()*(1000*60*60*24*365*n));
-    random_date.setUTCHours(0);
-    random_date.setUTCMinutes(0);
-    random_date.setUTCSeconds(0);
-    random_date.setUTCMilliseconds(0);
 
-    var badi = BadiCal.gregorian_to_badi(random_date);
+    // Choose a random location on earth
+    // NOTE: we fail for extreme latitudes
+    var lat = Math.random()*130 - 65;
+    var lon = Math.random()*360 - 180;
+    var place = new BadiCal.Location(lat, lon);
+
+    var badi = BadiCal.gregorian_to_badi(random_date, place);
     var orig = BadiCal.badi_to_gregorian(badi);
     if(orig.getTime() == random_date.getTime()) {
-      success(random_date.toUTCString() + " converted to " + badi.toString() + " and back.");
+      success(random_date.toUTCString() + " @ " + place.toString() + " converted to " + badi.toString() + " and back.");
     } else {
-      failure(random_date.toUTCString() + " converted to " + badi.toString() + " then to " + orig.toUTCString());
+      failure(random_date.toUTCString() + " @ " + place.toString() + " converted to " + badi.toString() + " then to " + orig.toUTCString());
     }
   }
   finish();

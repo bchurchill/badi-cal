@@ -20,6 +20,13 @@
 </script>
 <script>
 
+// Takes a Date object, and returns the day, month and year (as seen in Tehran)
+function show_date(d) {
+
+  return d.toLocaleDateString();
+
+}
+
 function update_dates(d1, d2) {
   var days = BadiCal.find_days(d1, d2);
   var s = "";
@@ -36,11 +43,11 @@ function update_dates(d1, d2) {
     }
     s = s + "</td>";
     if(days[i].type.substr(0,8) == "Holy Day") {
-      s = s + "<td class='entry_col shadow'>" + days[i].start_date.toLocaleDateString() + "</td>";
+      s = s + "<td class='entry_col shadow'>" + show_date(days[i].start_date) + "</td>";
     } else {
-      s = s + "<td class='entry_col'>" + days[i].start_date.toLocaleDateString() + "</td>";
+      s = s + "<td class='entry_col'>" + show_date(days[i].start_date) + "</td>";
     }
-    s = s + "<td class='entry_col'>" + days[i].end_date.toLocaleDateString() + "</td>";
+    s = s + "<td class='entry_col'>" + show_date(days[i].end_date) + "</td>";
     s = s + "<td class='entry_col'>" + days[i].badi_date.toString() + "</td>";
     s = s + "</tr>";
   }
