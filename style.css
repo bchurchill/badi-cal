@@ -36,6 +36,15 @@
   box-shadow: 3px 3px 1px #888888;
 }
 
+#location {
+  margin-bottom: 35px;
+}
+
+#today {
+  margin-bottom: 10px;
+  font-size: 125%;
+}
+
 /* Misc */
 
 #warning {
