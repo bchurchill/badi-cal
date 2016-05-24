@@ -46,12 +46,16 @@ Date.prototype.adjustDay = function() {
 }
 
 /** Various data used by this application */
-var BadiData = {
-  // Tehran is at 35°41′40″N 51°25′17″E
-  tehran_latitude: 35.6944,
-  tehran_longitude: 51.4215,
+var BadiData = (function() {
+  var data = {}
 
-  holy_days: [
+  // Tehran is at 35°41′40″N 51°25′17″E
+  data.tehran_latitude = 35.6944;
+  data.tehran_longitude = 51.4215;
+  data.tehran = { "latitude": data.tehran_latitude,
+                  "longitude": data.tehran_longitude };
+
+  data.holy_days = [
     { name: "Naw Ruz",
       month: 0, //baha
       day: 1,
@@ -90,15 +94,26 @@ var BadiData = {
       suspend: false }
   ]
 
-}
+  return data;
+}());
+
 
 // just one giant namespace
 var BadiCal = {
 
+  Location: function(latitude, longitude) {
+    this.latitude = latitude;
+    this.longitude = longitude;
+
+    this.toString = function() {
+      return "(" + this.latitude + ", " + this.longitude + ")";
+    }
+  },
+
   /** Construct a date on the Badi Calendar.  Objects of this class
    * just have a 'year', 'month' and 'day' field, along with some
    * helper functions and extra data (e.g. names of the months) */
-  BadiDate: function (badi_year, badi_month, badi_day) {
+  BadiDate: function (badi_year, badi_month, badi_day, hours_after_sunset, place) {
 
     /** Year 1 is 1844 */
     this.year = badi_year;
@@ -108,6 +123,12 @@ var BadiCal = {
 
     /** The day of the month, 1-indexed. */
     this.day = badi_day;
+
+    /** The number of hours past sunset */
+    this.hours = hours_after_sunset
+
+    /** The location ("timezone") for this time */
+    this.place = place;
 
     /** The names of the months */
     this.monthNames = [
@@ -152,18 +173,24 @@ var BadiCal = {
 
   /** Returns sunset in Tehran on a given gregorian day */
   tehran_sunset: function (date) {
+    return BadiCal.find_sunset(date, BadiData.tehran);
+  },
+
+  /** Returns sunset on a given gregorian day */
+  find_sunset: function (date, place) {
 
     // Get UTC hours of Sunset
     var sunset = BlueYonder.SunRiseSet(
                   date.getUTCFullYear(),
                   date.getUTCMonth()+1,
                   date.getUTCDate(),
-                  BadiData.tehran_latitude,
-                  BadiData.tehran_longitude)[1];
+                  place.latitude,
+                  place.longitude)[1];
 
     var sunset_hours = Math.floor(sunset);
     var sunset_minutes = Math.floor((sunset - sunset_hours)*60);
     var sunset_seconds = Math.floor(((sunset - sunset_hours)*60 - sunset_minutes)*60);
+
 
     // Put this into a Date object
     var sunset_utc = new Date(Date.UTC(
@@ -219,31 +246,39 @@ var BadiCal = {
     return (year - 1844) + 1;
   },
 
-  /** Takes a BadiDate and returns a Date.  This is timezone-independent,
-   * since the BadiDate doesn't keep track of times.  It returns */
+  /** Takes a BadiDate (which includes hours past sunset) and returns
+  a Date (which includes the time). Note that BadiDates contain a *
+  latitude/longitude, and this latitude/longitude is used to determine
+  * the corresponding UTC time. */
   badi_to_gregorian: function (badi) {
 
     if(badi.month < 19) {
       // normal computation, including for Ayyam-i-Ha
       var gregorian_start = BadiCal.badi_year_to_gregorian(badi.year);
       var naw_ruz = BadiCal.find_naw_ruz(gregorian_start);
-      var add_days = badi.month*19 + badi.day - 1;
-      return naw_ruz.addDays(add_days);
+      var add_days = badi.month*19 + badi.day - 2;
+      var day = naw_ruz.addDays(add_days);
+      var sunset = BadiCal.find_sunset(day, badi.place);
+      var correct = sunset.addDays(badi.hours/24)
+      return correct
     } else if (badi.month == 19) {
       // month of `Ala (the fast): compute from next gregorian year
       var gregorian_end = BadiCal.badi_year_to_gregorian(badi.year + 1);
       var naw_ruz = BadiCal.find_naw_ruz(gregorian_end);
-      var add_days = badi.day - 19 - 1;
-      return naw_ruz.addDays(add_days);
+      var add_days = badi.day - 19 - 2;
+      var day = naw_ruz.addDays(add_days);
+      var sunset = BadiCal.find_sunset(day, badi.place);
+      var correct = sunset.addDays(badi.hours/24)
+      return correct;
     }
 
     throw "Got invalid Badi month " + badi.month;
   },
 
-  /** Takes a Date and returns a BadiDate.  We disregard the time and
-   * consider the date to be at 00:00:00. UTC This function is designed
-   * to be an inverse of badi_to_gregorian for all inputs. */
-  gregorian_to_badi: function (date) {
+  /** Takes a Date and location and returns a BadiDate. *
+      badi_to_gregorian on the returned value should produce an identical
+      date object. */
+  gregorian_to_badi: function (date, place) {
 
     // Figure out the correct Badi year and Naw Ruz
     var gregorian_year = date.getUTCFullYear();
@@ -255,14 +290,23 @@ var BadiCal = {
       naw_ruz = BadiCal.find_naw_ruz(gregorian_year);
     }
 
-    // Count the days past Naw Ruz it is
+    // Count the days past Naw Ruz (@ 00:00:00 UTC) it is. If the sun
+    // has already set on this day, we need to add one more day.
     var diff = Math.floor((date - naw_ruz)/(1000*60*60*24));
+    var hours = 0;
+    if(BadiCal.find_sunset(date, place) < date) {
+      // Sunset has already happened
+      diff = diff+1
+      hours = (date - BadiCal.find_sunset(date, place))/(1000*60*60)
+    } else {
+      hours = (date - BadiCal.find_sunset(date.addDays(-1), place))/(1000*60*60)
+    }
     var month = Math.floor(diff/19);
 
     if(month < 18) {
       // the first 18 months are easy :)
       var day = diff - month*19 + 1;
-      return new BadiCal.BadiDate(badi_year, month, day);
+      return new BadiCal.BadiDate(badi_year, month, day, hours, place);
     }
 
     if(month == 18 || month == 19) {
@@ -275,9 +319,9 @@ var BadiCal = {
       var ayyam_days = year_length - 19*19;
 
       if (after_mulk < ayyam_days) {
-        return new BadiCal.BadiDate(badi_year, 18, after_mulk + 1);
+        return new BadiCal.BadiDate(badi_year, 18, after_mulk + 1, hours, place);
       } else {
-        return new BadiCal.BadiDate(badi_year, 19, after_mulk + 1 - ayyam_days);
+        return new BadiCal.BadiDate(badi_year, 19, after_mulk + 1 - ayyam_days, hours, place);
       }
     }
 
@@ -321,7 +365,7 @@ var BadiCal = {
 
   },
 
-  /** Finds the first gregorian day of the twin birthdays */
+  /** Finds the time (sunset in Tehran) that twin birthdays start */
   find_birthdays: function (gregorian_year) {
 
     // Compute 8 new moons past Naw Ruz
@@ -337,6 +381,7 @@ var BadiCal = {
     } else {
       last_day = last_day.addDays(2);
     }
+    last_day = BadiCal.tehran_sunset(last_day);
 
     var ret_date = new Date(Date.UTC(
       last_day.getUTCFullYear(),
@@ -375,7 +420,7 @@ var BadiCal = {
       // 2. find all holy days fixed to the solar calendar
       for(var i = 0; i < BadiData.holy_days.length; i++) {
         var holy_day = BadiData.holy_days[i];
-        var badi_day = new BadiCal.BadiDate(badi_year, holy_day.month, holy_day.day);
+        var badi_day = new BadiCal.BadiDate(badi_year, holy_day.month, holy_day.day, 12, BadiData.tehran);
         var greg_day = BadiCal.badi_to_gregorian(badi_day);
         var label = (holy_day.suspend ? "Holy Day - Work Suspended" : "Holy Day")
         var day = new BadiCal.DayUIObj(holy_day.name, greg_day.addDays(-1), greg_day, badi_day, label);
@@ -384,13 +429,13 @@ var BadiCal = {
 
       // 3. find the first day of each month
       for(var i = 0; i <= 19; i++) {
-        var badi_day = new BadiCal.BadiDate(badi_year, i, 1);
+        var badi_day = new BadiCal.BadiDate(badi_year, i, 1, 12, BadiData.tehran);
         var greg_start = BadiCal.badi_to_gregorian(badi_day).addDays(-1);
         if(i != 18) {
           var greg_end = greg_start.addDays(19);
           var day = new BadiCal.DayUIObj("Month of " + badi_day.monthToString(), greg_start, greg_end, badi_day, "Month");
         } else {
-          var greg_end = BadiCal.badi_to_gregorian(new BadiCal.BadiDate(badi_year, i+1, 1)).addDays(-1);
+          var greg_end = BadiCal.badi_to_gregorian(new BadiCal.BadiDate(badi_year, i+1, 1, 12, BadiData.tehran)).addDays(-1);
           var day = new BadiCal.DayUIObj("Ayyám-i-Há", greg_start, greg_end, badi_day, "Month");
         }
         days.push(day);
@@ -399,8 +444,8 @@ var BadiCal = {
 
       // 4. Find Birth of the Báb and Birth of Bahá'u'lláh
       var bday = BadiCal.find_birthdays(BadiCal.badi_year_to_gregorian(badi_year));
-      var badi_bday1 = BadiCal.gregorian_to_badi(bday);
-      var badi_bday2 = BadiCal.gregorian_to_badi(bday.addDays(1));
+      var badi_bday1 = BadiCal.gregorian_to_badi(bday, BadiData.tehran);
+      var badi_bday2 = BadiCal.gregorian_to_badi(bday.addDays(1), BadiData.tehran);
       var day1 = new BadiCal.DayUIObj("Birth of the Báb", bday.addDays(-1), bday, badi_bday1, "Holy Day - Work Suspended");
       var day2 = new BadiCal.DayUIObj("Birth of Bahá’u’lláh", bday.addDays(0), bday.addDays(1), badi_bday2, "Holy Day - Work Suspended");
       days.push(day1);
