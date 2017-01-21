@@ -1,0 +1,48 @@
+{
+  "name": "badi-cal",
+  "version": "1.0.0",
+  "description": "A module for calculating dates within the Badi Calendar",
+  "main": "badi.js",
+  "scripts": {
+    "build-example1": "webpack --config webpack.config.example1.js",
+    "build-example2": "webpack --config webpack.config.example2.js",
+    "lint": "esw webpack.config.* src --color",
+    "lint-watch": "npm run lint -- --watch",
+    "server-example1": "http-server src/examples/example1",
+    "server-example2": "http-server src/examples/example2",
+    "start-example1": "npm-run-all --parallel build-example1 server-example1",
+    "start-example2": "npm-run-all --parallel build-example2 server-example2",
+    "test": "jest",
+    "test-watch": "npm run test -- --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bchurchill/badi-cal.git"
+  },
+  "author": "Berkeley Churchill",
+  "license": "SEE LICENSE IN LICENSE",
+  "bugs": {
+    "url": "https://github.com/bchurchill/badi-cal/issues"
+  },
+  "homepage": "https://github.com/bchurchill/badi-cal#readme",
+  "devDependencies": {
+    "babel": "^6.5.2",
+    "babel-core": "^6.21.0",
+    "babel-eslint": "^7.1.1",
+    "babel-jest": "^18.0.0",
+    "babel-loader": "^6.2.10",
+    "babel-plugin-syntax-trailing-function-commas": "^6.20.0",
+    "babel-preset-latest": "^6.16.0",
+    "eslint": "^3.13.1",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-jest": "^1.0.2",
+    "eslint-watch": "^2.1.14",
+    "jest": "^18.1.0",
+    "jest-cli": "^18.1.0",
+    "webpack": "^1.14.0"
+  },
+  "dependencies": {
+    "http-server": "^0.9.0",
+    "npm-run-all": "^4.0.1"
+  }
+}

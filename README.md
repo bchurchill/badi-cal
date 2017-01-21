@@ -9,6 +9,30 @@ There's also a demo application which shows Holy days and the Badi months in a t
  * What day to host Feast on
  * What days the Holy Days fall on, taking into account the 10 July 2014 UHJ letter
 
+## Setup Environment
+
+* Make sure to have the following installed in your dev environment
+  * [NodeJS](https://nodejs.org/en/download/)
+  * [Yarn (optional, but you should really really do it)](https://yarnpkg.com/)
+
+## Running the examples
+
+* If you would like to build and run the examples, run the following from the
+  command line:
+
+```
+cd path/to/repo
+yarn # or "npm install" if you are not using yarn
+npm run start-example1 # or "npm run start-example2"
+```
+
+* Go to localhost:8080 in your browser
+
+**NOTE:** When loading pages in your browser, chrome tends to cache results, so
+if refreshing some change, it may show you old content. Follow instruction
+(here)[http://stackoverflow.com/questions/5690269/disabling-chrome-cache-for-website-development]
+to disable browser caching.
+
 ## Status
 
 This is in beta.  It has not been extensively tested.  Please let me know if ever you find an incorrect date -- that would be really bad!

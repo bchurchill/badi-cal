@@ -1,0 +1,12 @@
+# Emacs
+*~
+
+# Node
+npm-debug.log
+node_modules/
+
+# Mac
+.DS_Store
+
+# Build
+dist/

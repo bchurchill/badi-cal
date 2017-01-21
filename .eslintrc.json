@@ -1,0 +1,35 @@
+{
+  "root": true,
+  "parser": "babel-eslint",
+  "plugins": [
+    "jest",
+    "import"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 7,
+    "sourceType": "module"
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "jest": true
+  },
+  "rules": {
+    "camelcase": [2, {"properties": "always"}],
+    "comma-dangle": [1, "always-multiline"],
+    "max-len": ["error", {
+      "code": 80,
+      "ignorePattern": "^\\s*import\\s+[a-zA-Z\\d_]+\\s+from",
+      "tabWidth": 2
+    }],
+    "no-console": 1,
+    "jest/no-exclusive-tests": 2,
+    "jest/no-identical-title": 2,
+    "quotes": ["error", "single"]
+  }
+}
