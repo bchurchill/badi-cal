@@ -8,17 +8,23 @@
  * version of this API.
  */
 
+if (typeof window === 'undefined') {
+  throw Error('This version of badi-cal is only supported within browsers');
+}
+
 import BadiDate from '../BadiDate';
 import BlueYonder from '../extern/blueyonder';
-import HolyDays from '../_HolyDays';
-import LocationMap from '../_LocationMap';
+import HolyDays from '../HolyDays';
+import LocationMap from '../LocationMap';
 import Stellafane from '../extern/stellafane';
 
-import getGregorianDateForNawRuz from '../_getGregorianDateForNawRuz';
-import getGregorianDateForNextNewMoon from '../_getGregorianDateForNextNewMoon';
-import getGregorianDateForSunset from '../_getGregorianDateForSunset';
-import getGregorianDateForTwinBirthdays from '../_getGregorianDateForTwinBirthdays';
-import incrementGregorianDays from '../_incrementGregorianDays';
+import {
+  getUTCDateForNawRuzOnYear,
+  getUTCDateForNextNewMoonFromDate,
+  getUTCDateForSunsetOnDate,
+  getUTCDateForTwinBirthdaysOnYear,
+  incrementGregorianDays,
+} from '../util';
 
 // -----------------------------------------------------------------------------
 //
@@ -186,15 +192,15 @@ const BadiCal = {
   BadiDate: BadiDateV1,
 
   find_sunset(gregorianDate, place) {
-    return getGregorianDateForSunset(gregorianDate, place);
+    return getUTCDateForSunsetOnDate(gregorianDate, place);
   },
 
   tehran_sunset(gregorianDate) {
-    return getGregorianDateForSunset(gregorianDate, LocationMap.Tehran);
+    return getUTCDateForSunsetOnDate(gregorianDate, LocationMap.Tehran);
   },
 
   find_naw_ruz(gregorianYear) {
-    return getGregorianDateForNawRuz(gregorianYear);
+    return getUTCDateForNawRuzOnYear(gregorianYear);
   },
 
   badi_year_to_gregorian(badiYear) {
@@ -214,22 +220,20 @@ const BadiCal = {
     return badiDateV1FromBadiDate(badiDate);
   },
 
-  // QUESTION: Why do we need a min date?
   next_new_moon(gregorianDate, minGregorianDate) {
-    return getGregorianDateForNextNewMoon(
+    return getUTCDateForNextNewMoonFromDate(
       gregorianDate > minGregorianDate ? gregorianDate : minGregorianDate,
     );
   },
 
   find_birthdays(gregorianYear) {
-    return getGregorianDateForTwinBirthdays(gregorianYear);
+    return getUTCDateForTwinBirthdaysOnYear(gregorianYear);
   },
 
   DayUIObj,
 
   find_days(gregorianStartDate, gregorianEndDate) {
     // 1. Find start / end badi year
-    // QUESTION: Why are we adding / subtracting year
     const badiStartYear =
       BadiCal.gregorian_year_to_badi(gregorianStartDate.getUTCFullYear()) - 1;
     const badiEndYear =

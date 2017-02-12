@@ -1,11 +1,15 @@
 {
   "name": "badi-cal",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A module for calculating dates within the Badi Calendar",
-  "main": "badi.js",
+  "main": "build-v2",
   "scripts": {
     "build-example1": "webpack --config webpack.config.example1.js",
     "build-example2": "webpack --config webpack.config.example2.js",
+    "create-build": "npm-run-all --parallel create-build:*",
+    "create-build:browser-v1": "webpack --config webpack.config.v1.js",
+    "create-build:browser-v2": "webpack --config webpack.config.v2.js",
+    "create-build:v2": "babel src --out-dir build-v2 --ignore v1,__tests__",
     "lint": "esw webpack.config.* src --color",
     "lint-watch": "npm run lint -- --watch",
     "server-example1": "http-server src/examples/example1",
@@ -27,6 +31,7 @@
   "homepage": "https://github.com/bchurchill/badi-cal#readme",
   "devDependencies": {
     "babel": "^6.5.2",
+    "babel-cli": "^6.22.2",
     "babel-core": "^6.21.0",
     "babel-eslint": "^7.1.1",
     "babel-jest": "^18.0.0",

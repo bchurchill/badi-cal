@@ -1,23 +1,32 @@
 
-import getGregorianDateForNawRuz from './_getGregorianDateForNawRuz';
-import getGregorianDateForSunset from './_getGregorianDateForSunset';
-import incrementGregorianDays from './_incrementGregorianDays';
+import {
+  getUTCDateForNawRuzOnYear,
+  getUTCDateForSunsetOnDate,
+  incrementGregorianDays,
+} from './util';
 
 const MillisPerHour = 1000 * 60 * 60;
 const MillisPerDay = MillisPerHour * 24;
 
+/**
+ * Construct a date on the Badi Calendar.  Objects of this class just have a
+ * 'year', 'month' and 'day' field, along with some helper functions and extra
+ * data (e.g. names of the months)
+ */
 export default class BadiDate {
 
+  /**
+   * Takes a Date and location and returns a BadiDate. badi_to_gregorian on the
+   * returned value should produce an identical date object.
+   */
   static fromGregorianDate(gregorianDate, place) {
     // TODO: THIS LOGIC SHOULD GET MOVED TO NORMALIZE METHOD!!!
 
-    // QUESTION: We are getting the UTC year here, is that what we want?
-    // Shouldn't we be getting the year in OUR timezone.
     let gregorianYear = gregorianDate.getUTCFullYear();
-    let gregorianNawRuz = getGregorianDateForNawRuz(gregorianYear);
+    let gregorianNawRuz = getUTCDateForNawRuzOnYear(gregorianYear);
     if (gregorianDate < gregorianNawRuz) {
       gregorianYear -= 1;
-      gregorianNawRuz = getGregorianDateForNawRuz(gregorianYear);
+      gregorianNawRuz = getUTCDateForNawRuzOnYear(gregorianYear);
     }
     const badiYear = badiFromGregorianYear(gregorianYear);
 
@@ -27,16 +36,16 @@ export default class BadiDate {
 
     // Count the days past Naw Ruz (@ 00:00:00 UTC) it is. If the sun
     // has already set on this day, we need to add one more day.
-    if (getGregorianDateForSunset(gregorianDate, place) < gregorianDate) {
+    if (getUTCDateForSunsetOnDate(gregorianDate, place) < gregorianDate) {
       daysSinceNawRuz += 1;
-      const gregorianSunset = getGregorianDateForSunset(gregorianDate, place);
+      const gregorianSunset = getUTCDateForSunsetOnDate(gregorianDate, place);
       hoursAfterSunset = (gregorianDate - gregorianSunset) / MillisPerHour;
     }
     else {
       const previousGregorianDate =
         new Date(gregorianDate.getTime() - MillisPerDay);
       const gregorianSunset =
-        getGregorianDateForSunset(previousGregorianDate, place);
+        getUTCDateForSunsetOnDate(previousGregorianDate, place);
       hoursAfterSunset = (gregorianDate - gregorianSunset) / MillisPerHour;
     }
     const month = Math.floor(daysSinceNawRuz / 19);
@@ -50,19 +59,28 @@ export default class BadiDate {
 
     // month === 18 || month === 19
     const daysAfterMulk = daysSinceNawRuz - 18 * 19;
-    const nextGregorianNawRuz = getGregorianDateForNawRuz(gregorianYear + 1);
+    const nextGregorianNawRuz = getUTCDateForNawRuzOnYear(gregorianYear + 1);
     const daysInYear = (nextGregorianNawRuz - gregorianNawRuz) / MillisPerDay;
     const interclaryDays = daysInYear - 19 * 19;
     // Check if we are in ayyam-i-ha.
-    return daysAfterMulk < interclaryDays
-      ? new BadiDate(badiYear, 18, daysAfterMulk + 1, hoursAfterSunset, place)
-      : new BadiDate(
+    if (daysAfterMulk < interclaryDays) {
+      return new BadiDate(
+        badiYear,
+        18,
+        daysAfterMulk + 1,
+        hoursAfterSunset,
+        place,
+      );
+    }
+    else {
+      return new BadiDate(
         badiYear,
         19,
         daysAfterMulk + 1 - interclaryDays,
         hoursAfterSunset,
         place,
       );
+    }
   }
 
   constructor(year, month, day, hoursAfterSunset, place) {
@@ -113,6 +131,12 @@ export default class BadiDate {
     return this.compare(other) === 0;
   }
 
+
+  /**
+   * Returns a Date Object (which includes the time). Note that BadiDates
+   * contain a latitude/longitude, and this latitude/longitude is used to
+   * determine the corresponding UTC time.
+   */
   toGregorianDate() {
     if (this.getMonth() > 19) {
       throw Error('Corrupt state in BadiDate.getMonth()');
@@ -121,12 +145,11 @@ export default class BadiDate {
     // Month 18 is Interclary Days, this is a special case.
     if (this.getMonth() < 19) {
       const gregorianYear = gregorianFromBadiYear(this.getYear());
-      const gregorianNawRuz = getGregorianDateForNawRuz(gregorianYear);
-      // QUESTION: Why are we subtracting 2 days?
+      const gregorianNawRuz = getUTCDateForNawRuzOnYear(gregorianYear);
       const daysToAdd = this.getMonth() * 19 + this.getDay() - 2;
       const gregorianStartOfDay =
         incrementGregorianDays(gregorianNawRuz, daysToAdd);
-      const gregorianSunset = getGregorianDateForSunset(
+      const gregorianSunset = getUTCDateForSunsetOnDate(
         gregorianStartOfDay,
         this.getPlace(),
       );
@@ -138,13 +161,12 @@ export default class BadiDate {
 
     // this.getMonth() === 19
     const gregorianEnd = gregorianFromBadiYear(this.getYear() + 1);
-    const nextYearNawRuz = getGregorianDateForNawRuz(gregorianEnd);
-    // QUESTION: Why are we subtracting 2 days?
+    const nextYearNawRuz = getUTCDateForNawRuzOnYear(gregorianEnd);
     const daysToAdd = this.getDay() - 19 - 2; // Subtract 1 month.
     const gregorianStartOfDay = new Date(
       nextYearNawRuz.getTime() + daysToAdd * MillisPerDay,
     );
-    const gregorianSunset = getGregorianDateForSunset(
+    const gregorianSunset = getUTCDateForSunsetOnDate(
       gregorianStartOfDay,
       this.getPlace(),
     );

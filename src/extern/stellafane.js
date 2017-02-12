@@ -14,7 +14,7 @@ It's been modified in 2015 by Berkeley Churchill for the Badi Calendar app
 */
 
 
-export default {
+const EquinoxCalc = {
 
   vernal_equinox: function(year) {
     return EquinoxCalc.calcEquiSol(1, year);
@@ -147,3 +147,5 @@ export default {
   } //End fromJDtoUTC
 
 }
+
+export default EquinoxCalc;

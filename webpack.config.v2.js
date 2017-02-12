@@ -1,13 +1,10 @@
-/**
- * For bundling and generating Version 1 of this API.
- */
 
 const path = require('path');
 
 module.exports = {
-  entry: [path.resolve(__dirname, 'src/v1/index.js')],
+  entry: [path.resolve(__dirname, 'src/v2/index.js')],
   output: {
-    path: path.join(__dirname, 'browser-build-v1'),
+    path: path.join(__dirname, 'browser-build-v2'),
     filename: 'badi-cal.js',
   },
   module: {
