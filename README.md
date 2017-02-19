@@ -12,19 +12,31 @@ There's also a demo application which shows Holy days and the Badi months in a t
 ## Using the Code
 
 * If you would like to use the code in this project, the "browser-build-v1" and
-  "browser-build-v2" directories contain v1 and v2 of badi-cal that out-of-the-box
-  box in browsers. If you would like to use this project in a browser environment,
-  go ahead and import the javascript file from one of these directories into your
-  html.
+ "browser-build-v2" directories contain v1 and v2 of badi-cal that out-of-the-box
+ box in browsers. If you would like to use this project in a browser environment,
+ go ahead and import the javascript file from one of these directories into your
+ html.
 * If you have a more sophisticated javascript environment (node, webpack, etc...)
-  then the "build-v2" directory can be used in your project. This will work with
-  environments that support javascript modules (es6 imports, CommonJS, etc...)
+ then the "build-v2" directory can be used in your project. This will work with
+ environments that support javascript modules (es6 imports, CommonJS, etc...)
 
 ## Setup Environment
 
 * Make sure to have the following installed in your dev environment
-  * [NodeJS](https://nodejs.org/en/download/)
-  * [Yarn (optional, but you should really really do it)](https://yarnpkg.com/)
+ * [NodeJS](https://nodejs.org/en/download/)
+ * [Yarn (optional, but you should really really do it)](https://yarnpkg.com/)
+
+## Getting a Clean Build
+
+* Builds are created in the "browser-build-v1", "browser-build-v2", and "build-v2"
+  directories, so you shouldn't have to build any code if you want to just use
+  an existing build.
+* If you are making changes to the code, then please do the following:
+  * You can clean the builds with `npm run clean-build`
+  * You can generate a new build with `npm run create-build`
+  * It is not necessary to clean the build before creating one, but there may
+    be stale files left over from the previous build, especially if you are
+    adding / removing / deleting files between builds
 
 ## Running the Examples
 
@@ -44,18 +56,52 @@ if refreshing some change, it may show you old content. Follow instruction
 (here)[http://stackoverflow.com/questions/5690269/disabling-chrome-cache-for-website-development]
 to disable browser caching.
 
-## Status
+## About the Code
 
-This is in beta.  It has not been extensively tested.  Please let me know if ever you find an incorrect date -- that would be really bad!
+#### src/index.js
 
-Future work includes adding a location picker to the demo application to see sunrise/sunset times.
+* The root of the project that exports the modules. If you are using a browser
+  build, then the project is exported using a different mechanism. Please
+  see the section **src/v1 and src/v2**
 
-## Specs
+#### src/BadiDate.js
 
-In a world ravaged by thousand-page Intel manuals, I'm happy to use the following letters from the Universal House of Justice as a specification:
+* This contains the core API for the BadiDate class.
 
- * The 10 July 2014 letter, http://universalhouseofjustice.bahai.org/activities-bahai-community/20140710_001
- * The 11 Dec 2014 letter, included in this repository
+#### examples
+
+* This contains all the example apps that you can run. These show you how to
+  use the badi-cal API and helps confirm that it is working as expected.
+
+#### src/extern
+
+* This contains dependencies that could not be managed by npm. The dependencies
+  in this directory are mostly astronomical calculations. In the future, this
+  folder should be deprecated and all the dependencies of this project should
+  be tracked by a package manager.
+
+#### src/v1 and src/v2
+
+* These directories contain some setup code for generating the browser builds.
+  This is mostly responsible for exposing state to the window object. These
+  directories are ignored for builds that are not browser-dependent and use a
+  module system.
+* From updating the project from V1 to V2, we have removed a lot of the
+  functionality previously implemented in V1.
+* V2 only contains the BadiDate class, and the API for this class is slightly
+  different
+* If there is some functionality that you would like to see in V2, please create
+  a task.  
+
+#### src/HolyDays.js and src/LocationMap.js
+
+* These contain any state that the BadiCalendar needs for doing calculations.
+  The location map contains longitude and latitude of important cities and
+  holyDays contains metadata about all the holy days.
+
+#### src/Astronomy.js
+
+* Contains calculations for Astronomical events, for example, sunset times.
 
 ## Before Committing Code
 
@@ -68,4 +114,20 @@ make sure all the examples still work
 
 * Re-Bundle the downloadable javascript file
 
-`npm run create-bundles`
+```
+npm run clean-build
+npm run create-build
+```
+
+## Status
+
+This is in beta.  It has not been extensively tested.  Please let me know if ever you find an incorrect date -- that would be really bad!
+
+Future work includes adding a location picker to the demo application to see sunrise/sunset times.
+
+## Specs
+
+In a world ravaged by thousand-page Intel manuals, I'm happy to use the following letters from the Universal House of Justice as a specification:
+
+ * The 10 July 2014 letter, http://universalhouseofjustice.bahai.org/activities-bahai-community/20140710_001
+ * The 11 Dec 2014 letter, included in this repository

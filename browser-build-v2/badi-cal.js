@@ -77,38 +77,36 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _getGregorianDateForNawRuz = __webpack_require__(3);
-
-	var _getGregorianDateForNawRuz2 = _interopRequireDefault(_getGregorianDateForNawRuz);
-
-	var _getGregorianDateForSunset = __webpack_require__(6);
-
-	var _getGregorianDateForSunset2 = _interopRequireDefault(_getGregorianDateForSunset);
-
-	var _incrementGregorianDays = __webpack_require__(8);
-
-	var _incrementGregorianDays2 = _interopRequireDefault(_incrementGregorianDays);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	var _Astronomy = __webpack_require__(3);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var MillisPerHour = 1000 * 60 * 60;
 	var MillisPerDay = MillisPerHour * 24;
 
+	/**
+	 * Construct a date on the Badi Calendar.  Objects of this class just have a
+	 * 'year', 'month' and 'day' field, along with some helper functions and extra
+	 * data (e.g. names of the months)
+	 */
+
 	var BadiDate = function () {
 	  _createClass(BadiDate, null, [{
 	    key: 'fromGregorianDate',
+
+
+	    /**
+	     * Takes a Date and location and returns a BadiDate. badi_to_gregorian on the
+	     * returned value should produce an identical date object.
+	     */
 	    value: function fromGregorianDate(gregorianDate, place) {
 	      // TODO: THIS LOGIC SHOULD GET MOVED TO NORMALIZE METHOD!!!
 
-	      // QUESTION: We are getting the UTC year here, is that what we want?
-	      // Shouldn't we be getting the year in OUR timezone.
 	      var gregorianYear = gregorianDate.getUTCFullYear();
-	      var gregorianNawRuz = (0, _getGregorianDateForNawRuz2.default)(gregorianYear);
+	      var gregorianNawRuz = (0, _Astronomy.getUTCDateForNawRuzOnYear)(gregorianYear);
 	      if (gregorianDate < gregorianNawRuz) {
 	        gregorianYear -= 1;
-	        gregorianNawRuz = (0, _getGregorianDateForNawRuz2.default)(gregorianYear);
+	        gregorianNawRuz = (0, _Astronomy.getUTCDateForNawRuzOnYear)(gregorianYear);
 	      }
 	      var badiYear = badiFromGregorianYear(gregorianYear);
 
@@ -117,13 +115,13 @@
 
 	      // Count the days past Naw Ruz (@ 00:00:00 UTC) it is. If the sun
 	      // has already set on this day, we need to add one more day.
-	      if ((0, _getGregorianDateForSunset2.default)(gregorianDate, place) < gregorianDate) {
+	      if ((0, _Astronomy.getUTCDateForSunsetOnDate)(gregorianDate, place) < gregorianDate) {
 	        daysSinceNawRuz += 1;
-	        var gregorianSunset = (0, _getGregorianDateForSunset2.default)(gregorianDate, place);
+	        var gregorianSunset = (0, _Astronomy.getUTCDateForSunsetOnDate)(gregorianDate, place);
 	        hoursAfterSunset = (gregorianDate - gregorianSunset) / MillisPerHour;
 	      } else {
 	        var previousGregorianDate = new Date(gregorianDate.getTime() - MillisPerDay);
-	        var _gregorianSunset = (0, _getGregorianDateForSunset2.default)(previousGregorianDate, place);
+	        var _gregorianSunset = (0, _Astronomy.getUTCDateForSunsetOnDate)(previousGregorianDate, place);
 	        hoursAfterSunset = (gregorianDate - _gregorianSunset) / MillisPerHour;
 	      }
 	      var month = Math.floor(daysSinceNawRuz / 19);
@@ -139,11 +137,15 @@
 
 	      // month === 18 || month === 19
 	      var daysAfterMulk = daysSinceNawRuz - 18 * 19;
-	      var nextGregorianNawRuz = (0, _getGregorianDateForNawRuz2.default)(gregorianYear + 1);
+	      var nextGregorianNawRuz = (0, _Astronomy.getUTCDateForNawRuzOnYear)(gregorianYear + 1);
 	      var daysInYear = (nextGregorianNawRuz - gregorianNawRuz) / MillisPerDay;
 	      var interclaryDays = daysInYear - 19 * 19;
 	      // Check if we are in ayyam-i-ha.
-	      return daysAfterMulk < interclaryDays ? new BadiDate(badiYear, 18, daysAfterMulk + 1, hoursAfterSunset, place) : new BadiDate(badiYear, 19, daysAfterMulk + 1 - interclaryDays, hoursAfterSunset, place);
+	      if (daysAfterMulk < interclaryDays) {
+	        return new BadiDate(badiYear, 18, daysAfterMulk + 1, hoursAfterSunset, place);
+	      } else {
+	        return new BadiDate(badiYear, 19, daysAfterMulk + 1 - interclaryDays, hoursAfterSunset, place);
+	      }
 	    }
 	  }]);
 
@@ -202,6 +204,13 @@
 	    value: function equals(other) {
 	      return this.compare(other) === 0;
 	    }
+
+	    /**
+	     * Returns a Date Object (which includes the time). Note that BadiDates
+	     * contain a latitude/longitude, and this latitude/longitude is used to
+	     * determine the corresponding UTC time.
+	     */
+
 	  }, {
 	    key: 'toGregorianDate',
 	    value: function toGregorianDate() {
@@ -212,22 +221,20 @@
 	      // Month 18 is Interclary Days, this is a special case.
 	      if (this.getMonth() < 19) {
 	        var gregorianYear = gregorianFromBadiYear(this.getYear());
-	        var gregorianNawRuz = (0, _getGregorianDateForNawRuz2.default)(gregorianYear);
-	        // QUESTION: Why are we subtracting 2 days?
+	        var gregorianNawRuz = (0, _Astronomy.getUTCDateForNawRuzOnYear)(gregorianYear);
 	        var _daysToAdd = this.getMonth() * 19 + this.getDay() - 2;
-	        var _gregorianStartOfDay = (0, _incrementGregorianDays2.default)(gregorianNawRuz, _daysToAdd);
-	        var _gregorianSunset2 = (0, _getGregorianDateForSunset2.default)(_gregorianStartOfDay, this.getPlace());
-	        return (0, _incrementGregorianDays2.default)(_gregorianSunset2, this.getHoursAfterSunset() / 24);
+	        var _gregorianStartOfDay = (0, _Astronomy.incrementGregorianDays)(gregorianNawRuz, _daysToAdd);
+	        var _gregorianSunset2 = (0, _Astronomy.getUTCDateForSunsetOnDate)(_gregorianStartOfDay, this.getPlace());
+	        return (0, _Astronomy.incrementGregorianDays)(_gregorianSunset2, this.getHoursAfterSunset() / 24);
 	      }
 
 	      // this.getMonth() === 19
 	      var gregorianEnd = gregorianFromBadiYear(this.getYear() + 1);
-	      var nextYearNawRuz = (0, _getGregorianDateForNawRuz2.default)(gregorianEnd);
-	      // QUESTION: Why are we subtracting 2 days?
+	      var nextYearNawRuz = (0, _Astronomy.getUTCDateForNawRuzOnYear)(gregorianEnd);
 	      var daysToAdd = this.getDay() - 19 - 2; // Subtract 1 month.
 	      var gregorianStartOfDay = new Date(nextYearNawRuz.getTime() + daysToAdd * MillisPerDay);
-	      var gregorianSunset = (0, _getGregorianDateForSunset2.default)(gregorianStartOfDay, this.getPlace());
-	      return (0, _incrementGregorianDays2.default)(gregorianSunset, this.getHoursAfterSunset() / 24);
+	      var gregorianSunset = (0, _Astronomy.getUTCDateForSunsetOnDate)(gregorianStartOfDay, this.getPlace());
+	      return (0, _Astronomy.incrementGregorianDays)(gregorianSunset, this.getHoursAfterSunset() / 24);
 	    }
 	  }]);
 
@@ -256,23 +263,102 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.default = gregorianDateForNawRuz;
+	exports.incrementGregorianDays = incrementGregorianDays;
+	exports.getUTCDateForTwinBirthdaysOnYear = getUTCDateForTwinBirthdaysOnYear;
+	exports.getUTCDateForSunsetOnDate = getUTCDateForSunsetOnDate;
+	exports.getUTCDateForNextNewMoonFromDate = getUTCDateForNextNewMoonFromDate;
+	exports.getUTCDateForNawRuzOnYear = getUTCDateForNawRuzOnYear;
 
-	var _LocationMap = __webpack_require__(4);
+	var _blueyonder = __webpack_require__(4);
+
+	var _blueyonder2 = _interopRequireDefault(_blueyonder);
+
+	var _LocationMap = __webpack_require__(5);
 
 	var _LocationMap2 = _interopRequireDefault(_LocationMap);
 
-	var _stellafane = __webpack_require__(5);
+	var _stellafane = __webpack_require__(6);
 
 	var _stellafane2 = _interopRequireDefault(_stellafane);
 
-	var _getGregorianDateForSunset = __webpack_require__(6);
-
-	var _getGregorianDateForSunset2 = _interopRequireDefault(_getGregorianDateForSunset);
-
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	function gregorianDateForNawRuz(gregorianYear) {
+	var MillisPerDay = 1000 * 60 * 60 * 24;
+
+	/**
+	 * Increment a gregorian date by the number of days specified.
+	 */
+	function incrementGregorianDays(gregorianDate, days) {
+	  return new Date(gregorianDate.getTime() + days * MillisPerDay);
+	}
+
+	/**
+	 * Finds the time (sunset in Tehran) that twin birthdays start. Twin birthdays
+	 * occur at Sunset in tehran 8 new moons after Naw Ruz.
+	 */
+	function getUTCDateForTwinBirthdaysOnYear(gregorianYear) {
+	  var gregorianNawRuz = getUTCDateForNawRuzOnYear(gregorianYear);
+
+	  var UTCNewMoons = getUTCDateForSunsetOnDate(gregorianNawRuz, _LocationMap2.default.Tehran);
+	  for (var i = 0; i < 8; ++i) {
+	    UTCNewMoons = getUTCDateForNextNewMoonFromDate(UTCNewMoons);
+	  }
+
+	  var UTCSunset = getUTCDateForSunsetOnDate(UTCNewMoons, _LocationMap2.default.Tehran);
+	  if (UTCNewMoons < UTCSunset) {
+	    UTCNewMoons = incrementGregorianDays(UTCNewMoons, 1);
+	  } else {
+	    UTCNewMoons = incrementGregorianDays(UTCNewMoons, 2);
+	  }
+
+	  UTCNewMoons = getUTCDateForSunsetOnDate(UTCNewMoons, _LocationMap2.default.Tehran);
+	  return new Date(Date.UTC(UTCNewMoons.getUTCFullYear(), UTCNewMoons.getUTCMonth(), UTCNewMoons.getUTCDate()));
+	}
+
+	function getUTCDateForSunsetOnDate(gregorianDate, place) {
+
+	  var sunsetTime = _blueyonder2.default.SunRiseSet(gregorianDate.getUTCFullYear(), gregorianDate.getUTCMonth() + 1, gregorianDate.getUTCDate(), place.latitude, place.longitude)[1];
+
+	  var sunsetHours = Math.floor(sunsetTime);
+	  var sunsetMinutes = Math.floor((sunsetTime - sunsetHours) * 60);
+	  var sunsetSeconds = Math.floor(((sunsetTime - sunsetHours) * 60 - sunsetMinutes) * 60);
+
+	  return new Date(Date.UTC(gregorianDate.getUTCFullYear(), gregorianDate.getUTCMonth(), gregorianDate.getUTCDate(), sunsetHours, sunsetMinutes, sunsetSeconds));
+	}
+
+	/**
+	 * Takes a date and returns the date of the next new moon. This function is
+	 * recursive.  A client should call this function with two identical parameters.
+	 *
+	 * The detailed contract is this: find the first new moon during or after the
+	 * lunar cycle containing 'date' but occurring after the time 'min'.
+	 */
+	function getUTCDateForNextNewMoonFromDate(UTCDate) {
+	  return recurse(UTCDate, UTCDate);
+	}
+
+	function recurse(UTCDate, minUTCDate) {
+	  var quarters = _blueyonder2.default.MoonQuarters(UTCDate.getUTCFullYear(), UTCDate.getUTCMonth() + 1, // Month 0-based to 1-based indexing
+	  UTCDate.getUTCDate(), 0);
+	  var newMoonDateComponents = _blueyonder2.default.jdtocd(quarters[0]);
+	  var UTCNewMoon = new Date(Date.UTC(newMoonDateComponents[0], // Year
+	  newMoonDateComponents[1] - 1, // Month: 1-based to 0-based indexing
+	  newMoonDateComponents[2], // Day
+	  newMoonDateComponents[4], // Hour
+	  newMoonDateComponents[5], // Minute
+	  newMoonDateComponents[6]));
+
+	  if (UTCNewMoon > minUTCDate) {
+	    return UTCNewMoon;
+	  }
+	  return recurse(incrementGregorianDays(minUTCDate, 30), minUTCDate);
+	}
+
+	/**
+	 * Gets the day of Naw Ruz in a given gregorian year.  It returns the day at
+	 * 00:00:00 UTC.
+	 */
+	function getUTCDateForNawRuzOnYear(gregorianYear) {
 
 	  // Step 0: Follow to the UHJ
 	  // In 2026, the equinox is less than a minute from sunset. The
@@ -284,242 +370,23 @@
 	  }
 
 	  // Step 1: find UTC time of the equinox
-	  var equinoxGregorianDate = _stellafane2.default.vernal_equinox(gregorianYear);
+	  var UTCEquinox = _stellafane2.default.vernal_equinox(gregorianYear);
 
 	  // Step 2: Find Tehran's sunset on the day of the equinox
-	  var sunsetGregorianDate = (0, _getGregorianDateForSunset2.default)(equinoxGregorianDate, _LocationMap2.default.Tehran);
+	  var UTCSunset = getUTCDateForSunsetOnDate(UTCEquinox, _LocationMap2.default.Tehran);
 
 	  // Step 3: Find the final day.
-	  return equinoxGregorianDate < sunsetGregorianDate ? new Date(Date.UTC(equinoxGregorianDate.getUTCFullYear(), equinoxGregorianDate.getUTCMonth(), equinoxGregorianDate.getUTCDate())) : new Date(Date.UTC(equinoxGregorianDate.getUTCFullYear(), equinoxGregorianDate.getUTCMonth(),
+	  if (UTCEquinox < UTCSunset) {
+	    return new Date(Date.UTC(UTCEquinox.getUTCFullYear(), UTCEquinox.getUTCMonth(), UTCEquinox.getUTCDate()));
+	  }
+	  return new Date(Date.UTC(UTCEquinox.getUTCFullYear(), UTCEquinox.getUTCMonth(),
 	  // NOTE: Date class handles the case where the day spills to the
 	  // next month.
-	  equinoxGregorianDate.getUTCDate() + 1));
+	  UTCEquinox.getUTCDate() + 1));
 	}
 
 /***/ },
 /* 4 */
-/***/ function(module, exports) {
-
-	"use strict";
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.default = {
-	  Tehran: { latitude: 35.6944, longitude: 51.4215 }
-	};
-
-/***/ },
-/* 5 */
-/***/ function(module, exports) {
-
-	"use strict";
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-
-	/**
-	The following code is brought to you by:
-	<!--
-	Stellafane Equinox & Solsticew Calculator for http://www.Stellafane.com
-	2004-Mar-07 KHS Created by Ken Slater
-	2006-Jun-15 KHS: New page format
-	2008-Mar-21 KHS: Fixed to work with Safari
-	2012-Feb-04 KHS: Updated to HTML5
-	Copyright 1999-2012 The Springfield Telescope Makers, Inc., All Rights Reserved.
-	-->
-
-	It's been modified in 2015 by Berkeley Churchill for the Badi Calendar app
-	*/
-
-	var EquinoxCalc = {
-
-	  vernal_equinox: function vernal_equinox(year) {
-	    return EquinoxCalc.calcEquiSol(1, year);
-	  },
-
-	  //-----Utility Funtions------------------------------------------------------------
-	  INT: function INT(n) {
-	    return Math.floor(n);
-	  }, // Emulates BASIC's INT Funtion
-	  POW2: function POW2(n) {
-	    return Math.pow(n, 2);
-	  }, // Square a number
-	  POW3: function POW3(n) {
-	    return Math.pow(n, 3);
-	  }, // Cube a number
-	  POW4: function POW4(n) {
-	    return Math.pow(n, 4);
-	  }, // Number to the 4th power
-	  COS: function COS(deg) {
-	    // Cosine function with degrees as input
-	    return Math.cos(deg * Math.PI / 180);
-	  },
-
-	  //-----Calculate and Display a single event for a single year (Either a Equiniox or Solstice)
-	  // Meeus Astronmical Algorithms Chapter 27
-	  calcEquiSol: function calcEquiSol(i, year) {
-	    var k = i - 1;
-	    var str;
-	    var JDE0 = EquinoxCalc.calcInitial(k, year); // Initial estimate of date of event
-	    var T = (JDE0 - 2451545.0) / 36525;
-	    var W = 35999.373 * T - 2.47;
-	    var dL = 1 + 0.0334 * EquinoxCalc.COS(W) + 0.0007 * EquinoxCalc.COS(2 * W);
-	    var S = EquinoxCalc.periodic24(T);
-	    var JDE = JDE0 + 0.00001 * S / dL; // This is the answer in Julian Emphemeris Days
-	    var TDT = EquinoxCalc.fromJDtoUTC(JDE); // Convert Julian Days to TDT in a Date Object
-	    var UTC = EquinoxCalc.fromTDTtoUTC(TDT); // Correct TDT to UTC, both as Date Objects
-	    return UTC;
-	  }, // End calcEquiSol
-
-	  //-----Calcualte an initial guess as the JD of the Equinox or Solstice of a Given Year
-	  // Meeus Astronmical Algorithms Chapter 27
-	  calcInitial: function calcInitial(k, year) {
-	    // Valid for years 1000 to 3000
-	    var JDE0 = 0,
-	        Y = (year - 2000) / 1000;
-	    switch (k) {
-	      case 0:
-	        JDE0 = 2451623.80984 + 365242.37404 * Y + 0.05169 * EquinoxCalc.POW2(Y) - 0.00411 * EquinoxCalc.POW3(Y) - 0.00057 * EquinoxCalc.POW4(Y);break;
-	      case 1:
-	        JDE0 = 2451716.56767 + 365241.62603 * Y + 0.00325 * EquinoxCalc.POW2(Y) + 0.00888 * EquinoxCalc.POW3(Y) - 0.00030 * EquinoxCalc.POW4(Y);break;
-	      case 2:
-	        JDE0 = 2451810.21715 + 365242.01767 * Y - 0.11575 * EquinoxCalc.POW2(Y) + 0.00337 * EquinoxCalc.POW3(Y) + 0.00078 * EquinoxCalc.POW4(Y);break;
-	      case 3:
-	        JDE0 = 2451900.05952 + 365242.74049 * Y - 0.06223 * EquinoxCalc.POW2(Y) - 0.00823 * EquinoxCalc.POW3(Y) + 0.00032 * EquinoxCalc.POW4(Y);break;
-	    }
-	    return JDE0;
-	  }, // End calcInitial
-
-	  //-----Calculate 24 Periodic Terms----------------------------------------------------
-	  // Meeus Astronmical Algorithms Chapter 27
-	  periodic24: function periodic24(T) {
-	    var A = new Array(485, 203, 199, 182, 156, 136, 77, 74, 70, 58, 52, 50, 45, 44, 29, 18, 17, 16, 14, 12, 12, 12, 9, 8);
-	    var B = new Array(324.96, 337.23, 342.08, 27.85, 73.14, 171.52, 222.54, 296.72, 243.58, 119.81, 297.17, 21.02, 247.54, 325.15, 60.93, 155.12, 288.79, 198.04, 199.76, 95.39, 287.11, 320.81, 227.73, 15.45);
-	    var C = new Array(1934.136, 32964.467, 20.186, 445267.112, 45036.886, 22518.443, 65928.934, 3034.906, 9037.513, 33718.147, 150.678, 2281.226, 29929.562, 31555.956, 4443.417, 67555.328, 4562.452, 62894.029, 31436.921, 14577.848, 31931.756, 34777.259, 1222.114, 16859.074);
-	    var S = 0;
-	    for (var i = 0; i < 24; i++) {
-	      S += A[i] * EquinoxCalc.COS(B[i] + C[i] * T);
-	    }
-	    return S;
-	  },
-
-	  //-----Correct TDT to UTC----------------------------------------------------------------
-	  fromTDTtoUTC: function fromTDTtoUTC(tobj) {
-	    // from Meeus Astronmical Algroithms Chapter 10
-	    // Correction lookup table has entry for every even year between TBLfirst and TBLlast
-	    var TBLfirst = 1620,
-	        TBLlast = 2002; // Range of years in lookup table
-	    var TBL = new Array( // Corrections in Seconds
-	    /*1620*/121, 112, 103, 95, 88, 82, 77, 72, 68, 63, 60, 56, 53, 51, 48, 46, 44, 42, 40, 38,
-	    /*1660*/35, 33, 31, 29, 26, 24, 22, 20, 18, 16, 14, 12, 11, 10, 9, 8, 7, 7, 7, 7,
-	    /*1700*/7, 7, 8, 8, 9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11,
-	    /*1740*/11, 11, 12, 12, 12, 12, 13, 13, 13, 14, 14, 14, 14, 15, 15, 15, 15, 15, 16, 16,
-	    /*1780*/16, 16, 16, 16, 16, 16, 15, 15, 14, 13,
-	    /*1800*/13.1, 12.5, 12.2, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0, 11.9, 11.6, 11.0, 10.2, 9.2, 8.2,
-	    /*1830*/7.1, 6.2, 5.6, 5.4, 5.3, 5.4, 5.6, 5.9, 6.2, 6.5, 6.8, 7.1, 7.3, 7.5, 7.6,
-	    /*1860*/7.7, 7.3, 6.2, 5.2, 2.7, 1.4, -1.2, -2.8, -3.8, -4.8, -5.5, -5.3, -5.6, -5.7, -5.9,
-	    /*1890*/-6.0, -6.3, -6.5, -6.2, -4.7, -2.8, -0.1, 2.6, 5.3, 7.7, 10.4, 13.3, 16.0, 18.2, 20.2,
-	    /*1920*/21.1, 22.4, 23.5, 23.8, 24.3, 24.0, 23.9, 23.9, 23.7, 24.0, 24.3, 25.3, 26.2, 27.3, 28.2,
-	    /*1950*/29.1, 30.0, 30.7, 31.4, 32.2, 33.1, 34.0, 35.0, 36.5, 38.3, 40.2, 42.2, 44.5, 46.5, 48.5,
-	    /*1980*/50.5, 52.5, 53.8, 54.9, 55.8, 56.9, 58.3, 60.0, 61.6, 63.0, 63.8, 64.3); /*2002 last entry*/
-	    // Values for Delta T for 2000 thru 2002 from NASA
-	    var deltaT = 0; // deltaT = TDT - UTC (in Seconds)
-	    var Year = tobj.getUTCFullYear();
-	    var t = (Year - 2000) / 100; // Centuries from the epoch 2000.0
-
-	    if (Year >= TBLfirst && Year <= TBLlast) {
-	      // Find correction in table
-	      if (Year % 2) {
-	        // Odd year - interpolate
-	        deltaT = (TBL[(Year - TBLfirst - 1) / 2] + TBL[(Year - TBLfirst + 1) / 2]) / 2;
-	      } else {
-	        // Even year - direct table lookup
-	        deltaT = TBL[(Year - TBLfirst) / 2];
-	      }
-	    } else if (Year < 948) {
-	      deltaT = 2177 + 497 * t + 44.1 * EquinoxCalc.POW2(t);
-	    } else if (Year >= 948) {
-	      deltaT = 102 + 102 * t + 25.3 * EquinoxCalc.POW2(t);
-	      if (Year >= 2000 && Year <= 2100) {
-	        // Special correction to avoid discontinurity in 2000
-	        deltaT += 0.37 * (Year - 2100);
-	      }
-	    } else {
-	      alert("Error: TDT to UTC correction not computed");
-	    }
-	    return new Date(tobj.getTime() - deltaT * 1000); // JavaScript native time is in milliseonds
-	  }, // End fromTDTtoUTC
-
-	  //-----Julian Date to UTC Date Object----------------------------------------------------
-	  // Meeus Astronmical Algorithms Chapter 7
-	  fromJDtoUTC: function fromJDtoUTC(JD) {
-	    // JD = Julian Date, possible with fractional days
-	    // Output is a JavaScript UTC Date Object
-	    var A, alpha;
-	    var Z = EquinoxCalc.INT(JD + 0.5); // Integer JD's
-	    var F = JD + 0.5 - Z; // Fractional JD's
-	    if (Z < 2299161) {
-	      A = Z;
-	    } else {
-	      alpha = EquinoxCalc.INT((Z - 1867216.25) / 36524.25);
-	      A = Z + 1 + alpha - EquinoxCalc.INT(alpha / 4);
-	    }
-	    var B = A + 1524;
-	    var C = EquinoxCalc.INT((B - 122.1) / 365.25);
-	    var D = EquinoxCalc.INT(365.25 * C);
-	    var E = EquinoxCalc.INT((B - D) / 30.6001);
-	    var DT = B - D - EquinoxCalc.INT(30.6001 * E) + F; // Day of Month with decimals for time
-	    var Mon = E - (E < 13.5 ? 1 : 13); // Month Number
-	    var Yr = C - (Mon > 2.5 ? 4716 : 4715); // Year
-	    var Day = EquinoxCalc.INT(DT); // Day of Month without decimals for time
-	    var H = 24 * (DT - Day); // Hours and fractional hours
-	    var Hr = EquinoxCalc.INT(H); // Integer Hours
-	    var M = 60 * (H - Hr); // Minutes and fractional minutes
-	    var Min = EquinoxCalc.INT(M); // Integer Minutes
-	    var Sec = EquinoxCalc.INT(60 * (M - Min)); // Integer Seconds (Milliseconds discarded)
-	    //Create and set a JavaScript Date Object and return it
-	    var theDate = new Date(0);
-	    theDate.setUTCFullYear(Yr, Mon - 1, Day);
-	    theDate.setUTCHours(Hr, Min, Sec);
-	    return theDate;
-	  } //End fromJDtoUTC
-
-	};
-
-	exports.default = EquinoxCalc;
-
-/***/ },
-/* 6 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.default = getGregorianDateForSunset;
-
-	var _blueyonder = __webpack_require__(7);
-
-	var _blueyonder2 = _interopRequireDefault(_blueyonder);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function getGregorianDateForSunset(gregorianDate, place) {
-
-	  var sunsetTime = _blueyonder2.default.SunRiseSet(gregorianDate.getUTCFullYear(), gregorianDate.getUTCMonth() + 1, gregorianDate.getUTCDate(), place.latitude, place.longitude)[1];
-
-	  var sunsetHours = Math.floor(sunsetTime);
-	  var sunsetMinutes = Math.floor((sunsetTime - sunsetHours) * 60);
-	  var sunsetSeconds = Math.floor(((sunsetTime - sunsetHours) * 60 - sunsetMinutes) * 60);
-
-	  return new Date(Date.UTC(gregorianDate.getUTCFullYear(), gregorianDate.getUTCMonth(), gregorianDate.getUTCDate(), sunsetHours, sunsetMinutes, sunsetSeconds));
-	}
-
-/***/ },
-/* 7 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1087,7 +954,7 @@
 	exports.default = BlueYonder;
 
 /***/ },
-/* 8 */
+/* 5 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1095,13 +962,190 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.default = incrementGregorianDays;
+	exports.default = {
+	  Tehran: { latitude: 35.6944, longitude: 51.4215 }
+	};
 
-	var MillisPerDay = 1000 * 60 * 60 * 24;
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
 
-	function incrementGregorianDays(gregorianDate, days) {
-	  return new Date(gregorianDate.getTime() + days * MillisPerDay);
-	}
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	/**
+	The following code is brought to you by:
+	<!--
+	Stellafane Equinox & Solsticew Calculator for http://www.Stellafane.com
+	2004-Mar-07 KHS Created by Ken Slater
+	2006-Jun-15 KHS: New page format
+	2008-Mar-21 KHS: Fixed to work with Safari
+	2012-Feb-04 KHS: Updated to HTML5
+	Copyright 1999-2012 The Springfield Telescope Makers, Inc., All Rights Reserved.
+	-->
+
+	It's been modified in 2015 by Berkeley Churchill for the Badi Calendar app
+	*/
+
+	var EquinoxCalc = {
+
+	  vernal_equinox: function vernal_equinox(year) {
+	    return EquinoxCalc.calcEquiSol(1, year);
+	  },
+
+	  //-----Utility Funtions------------------------------------------------------------
+	  INT: function INT(n) {
+	    return Math.floor(n);
+	  }, // Emulates BASIC's INT Funtion
+	  POW2: function POW2(n) {
+	    return Math.pow(n, 2);
+	  }, // Square a number
+	  POW3: function POW3(n) {
+	    return Math.pow(n, 3);
+	  }, // Cube a number
+	  POW4: function POW4(n) {
+	    return Math.pow(n, 4);
+	  }, // Number to the 4th power
+	  COS: function COS(deg) {
+	    // Cosine function with degrees as input
+	    return Math.cos(deg * Math.PI / 180);
+	  },
+
+	  //-----Calculate and Display a single event for a single year (Either a Equiniox or Solstice)
+	  // Meeus Astronmical Algorithms Chapter 27
+	  calcEquiSol: function calcEquiSol(i, year) {
+	    var k = i - 1;
+	    var str;
+	    var JDE0 = EquinoxCalc.calcInitial(k, year); // Initial estimate of date of event
+	    var T = (JDE0 - 2451545.0) / 36525;
+	    var W = 35999.373 * T - 2.47;
+	    var dL = 1 + 0.0334 * EquinoxCalc.COS(W) + 0.0007 * EquinoxCalc.COS(2 * W);
+	    var S = EquinoxCalc.periodic24(T);
+	    var JDE = JDE0 + 0.00001 * S / dL; // This is the answer in Julian Emphemeris Days
+	    var TDT = EquinoxCalc.fromJDtoUTC(JDE); // Convert Julian Days to TDT in a Date Object
+	    var UTC = EquinoxCalc.fromTDTtoUTC(TDT); // Correct TDT to UTC, both as Date Objects
+	    return UTC;
+	  }, // End calcEquiSol
+
+	  //-----Calcualte an initial guess as the JD of the Equinox or Solstice of a Given Year
+	  // Meeus Astronmical Algorithms Chapter 27
+	  calcInitial: function calcInitial(k, year) {
+	    // Valid for years 1000 to 3000
+	    var JDE0 = 0,
+	        Y = (year - 2000) / 1000;
+	    switch (k) {
+	      case 0:
+	        JDE0 = 2451623.80984 + 365242.37404 * Y + 0.05169 * EquinoxCalc.POW2(Y) - 0.00411 * EquinoxCalc.POW3(Y) - 0.00057 * EquinoxCalc.POW4(Y);break;
+	      case 1:
+	        JDE0 = 2451716.56767 + 365241.62603 * Y + 0.00325 * EquinoxCalc.POW2(Y) + 0.00888 * EquinoxCalc.POW3(Y) - 0.00030 * EquinoxCalc.POW4(Y);break;
+	      case 2:
+	        JDE0 = 2451810.21715 + 365242.01767 * Y - 0.11575 * EquinoxCalc.POW2(Y) + 0.00337 * EquinoxCalc.POW3(Y) + 0.00078 * EquinoxCalc.POW4(Y);break;
+	      case 3:
+	        JDE0 = 2451900.05952 + 365242.74049 * Y - 0.06223 * EquinoxCalc.POW2(Y) - 0.00823 * EquinoxCalc.POW3(Y) + 0.00032 * EquinoxCalc.POW4(Y);break;
+	    }
+	    return JDE0;
+	  }, // End calcInitial
+
+	  //-----Calculate 24 Periodic Terms----------------------------------------------------
+	  // Meeus Astronmical Algorithms Chapter 27
+	  periodic24: function periodic24(T) {
+	    var A = new Array(485, 203, 199, 182, 156, 136, 77, 74, 70, 58, 52, 50, 45, 44, 29, 18, 17, 16, 14, 12, 12, 12, 9, 8);
+	    var B = new Array(324.96, 337.23, 342.08, 27.85, 73.14, 171.52, 222.54, 296.72, 243.58, 119.81, 297.17, 21.02, 247.54, 325.15, 60.93, 155.12, 288.79, 198.04, 199.76, 95.39, 287.11, 320.81, 227.73, 15.45);
+	    var C = new Array(1934.136, 32964.467, 20.186, 445267.112, 45036.886, 22518.443, 65928.934, 3034.906, 9037.513, 33718.147, 150.678, 2281.226, 29929.562, 31555.956, 4443.417, 67555.328, 4562.452, 62894.029, 31436.921, 14577.848, 31931.756, 34777.259, 1222.114, 16859.074);
+	    var S = 0;
+	    for (var i = 0; i < 24; i++) {
+	      S += A[i] * EquinoxCalc.COS(B[i] + C[i] * T);
+	    }
+	    return S;
+	  },
+
+	  //-----Correct TDT to UTC----------------------------------------------------------------
+	  fromTDTtoUTC: function fromTDTtoUTC(tobj) {
+	    // from Meeus Astronmical Algroithms Chapter 10
+	    // Correction lookup table has entry for every even year between TBLfirst and TBLlast
+	    var TBLfirst = 1620,
+	        TBLlast = 2002; // Range of years in lookup table
+	    var TBL = new Array( // Corrections in Seconds
+	    /*1620*/121, 112, 103, 95, 88, 82, 77, 72, 68, 63, 60, 56, 53, 51, 48, 46, 44, 42, 40, 38,
+	    /*1660*/35, 33, 31, 29, 26, 24, 22, 20, 18, 16, 14, 12, 11, 10, 9, 8, 7, 7, 7, 7,
+	    /*1700*/7, 7, 8, 8, 9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11,
+	    /*1740*/11, 11, 12, 12, 12, 12, 13, 13, 13, 14, 14, 14, 14, 15, 15, 15, 15, 15, 16, 16,
+	    /*1780*/16, 16, 16, 16, 16, 16, 15, 15, 14, 13,
+	    /*1800*/13.1, 12.5, 12.2, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0, 11.9, 11.6, 11.0, 10.2, 9.2, 8.2,
+	    /*1830*/7.1, 6.2, 5.6, 5.4, 5.3, 5.4, 5.6, 5.9, 6.2, 6.5, 6.8, 7.1, 7.3, 7.5, 7.6,
+	    /*1860*/7.7, 7.3, 6.2, 5.2, 2.7, 1.4, -1.2, -2.8, -3.8, -4.8, -5.5, -5.3, -5.6, -5.7, -5.9,
+	    /*1890*/-6.0, -6.3, -6.5, -6.2, -4.7, -2.8, -0.1, 2.6, 5.3, 7.7, 10.4, 13.3, 16.0, 18.2, 20.2,
+	    /*1920*/21.1, 22.4, 23.5, 23.8, 24.3, 24.0, 23.9, 23.9, 23.7, 24.0, 24.3, 25.3, 26.2, 27.3, 28.2,
+	    /*1950*/29.1, 30.0, 30.7, 31.4, 32.2, 33.1, 34.0, 35.0, 36.5, 38.3, 40.2, 42.2, 44.5, 46.5, 48.5,
+	    /*1980*/50.5, 52.5, 53.8, 54.9, 55.8, 56.9, 58.3, 60.0, 61.6, 63.0, 63.8, 64.3); /*2002 last entry*/
+	    // Values for Delta T for 2000 thru 2002 from NASA
+	    var deltaT = 0; // deltaT = TDT - UTC (in Seconds)
+	    var Year = tobj.getUTCFullYear();
+	    var t = (Year - 2000) / 100; // Centuries from the epoch 2000.0
+
+	    if (Year >= TBLfirst && Year <= TBLlast) {
+	      // Find correction in table
+	      if (Year % 2) {
+	        // Odd year - interpolate
+	        deltaT = (TBL[(Year - TBLfirst - 1) / 2] + TBL[(Year - TBLfirst + 1) / 2]) / 2;
+	      } else {
+	        // Even year - direct table lookup
+	        deltaT = TBL[(Year - TBLfirst) / 2];
+	      }
+	    } else if (Year < 948) {
+	      deltaT = 2177 + 497 * t + 44.1 * EquinoxCalc.POW2(t);
+	    } else if (Year >= 948) {
+	      deltaT = 102 + 102 * t + 25.3 * EquinoxCalc.POW2(t);
+	      if (Year >= 2000 && Year <= 2100) {
+	        // Special correction to avoid discontinurity in 2000
+	        deltaT += 0.37 * (Year - 2100);
+	      }
+	    } else {
+	      alert("Error: TDT to UTC correction not computed");
+	    }
+	    return new Date(tobj.getTime() - deltaT * 1000); // JavaScript native time is in milliseonds
+	  }, // End fromTDTtoUTC
+
+	  //-----Julian Date to UTC Date Object----------------------------------------------------
+	  // Meeus Astronmical Algorithms Chapter 7
+	  fromJDtoUTC: function fromJDtoUTC(JD) {
+	    // JD = Julian Date, possible with fractional days
+	    // Output is a JavaScript UTC Date Object
+	    var A, alpha;
+	    var Z = EquinoxCalc.INT(JD + 0.5); // Integer JD's
+	    var F = JD + 0.5 - Z; // Fractional JD's
+	    if (Z < 2299161) {
+	      A = Z;
+	    } else {
+	      alpha = EquinoxCalc.INT((Z - 1867216.25) / 36524.25);
+	      A = Z + 1 + alpha - EquinoxCalc.INT(alpha / 4);
+	    }
+	    var B = A + 1524;
+	    var C = EquinoxCalc.INT((B - 122.1) / 365.25);
+	    var D = EquinoxCalc.INT(365.25 * C);
+	    var E = EquinoxCalc.INT((B - D) / 30.6001);
+	    var DT = B - D - EquinoxCalc.INT(30.6001 * E) + F; // Day of Month with decimals for time
+	    var Mon = E - (E < 13.5 ? 1 : 13); // Month Number
+	    var Yr = C - (Mon > 2.5 ? 4716 : 4715); // Year
+	    var Day = EquinoxCalc.INT(DT); // Day of Month without decimals for time
+	    var H = 24 * (DT - Day); // Hours and fractional hours
+	    var Hr = EquinoxCalc.INT(H); // Integer Hours
+	    var M = 60 * (H - Hr); // Minutes and fractional minutes
+	    var Min = EquinoxCalc.INT(M); // Integer Minutes
+	    var Sec = EquinoxCalc.INT(60 * (M - Min)); // Integer Seconds (Milliseconds discarded)
+	    //Create and set a JavaScript Date Object and return it
+	    var theDate = new Date(0);
+	    theDate.setUTCFullYear(Yr, Mon - 1, Day);
+	    theDate.setUTCHours(Hr, Min, Sec);
+	    return theDate;
+	  } //End fromJDtoUTC
+
+	};
+
+	exports.default = EquinoxCalc;
 
 /***/ }
 /******/ ]);

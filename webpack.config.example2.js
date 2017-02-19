@@ -4,8 +4,8 @@ const path = require('path');
 module.exports = {
   entry: [path.resolve(__dirname, 'src/v1/index.js')],
   output: {
-    path: path.resolve(__dirname, 'src/examples/example2/dist'),
-    filename: 'badi.js',
+    path: path.resolve(__dirname, 'examples/example2/browser-build-v1'),
+    filename: 'badi-cal.js',
   },
   module: {
     loaders: [

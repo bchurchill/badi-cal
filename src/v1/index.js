@@ -24,7 +24,7 @@ import {
   getUTCDateForSunsetOnDate,
   getUTCDateForTwinBirthdaysOnYear,
   incrementGregorianDays,
-} from '../util';
+} from '../Astronomy';
 
 // -----------------------------------------------------------------------------
 //

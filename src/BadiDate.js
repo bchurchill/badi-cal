@@ -3,7 +3,7 @@ import {
   getUTCDateForNawRuzOnYear,
   getUTCDateForSunsetOnDate,
   incrementGregorianDays,
-} from './util';
+} from './Astronomy';
 
 const MillisPerHour = 1000 * 60 * 60;
 const MillisPerDay = MillisPerHour * 24;
