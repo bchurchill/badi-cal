@@ -1,10 +1,10 @@
 
 /**
 The following code is brought to you by:
-<!-- 
+<!--
 Stellafane Equinox & Solsticew Calculator for http://www.Stellafane.com
 2004-Mar-07 KHS Created by Ken Slater
-2006-Jun-15 KHS: New page format 
+2006-Jun-15 KHS: New page format
 2008-Mar-21 KHS: Fixed to work with Safari
 2012-Feb-04 KHS: Updated to HTML5
 Copyright 1999-2012 The Springfield Telescope Makers, Inc., All Rights Reserved.
@@ -14,7 +14,7 @@ It's been modified in 2015 by Berkeley Churchill for the Badi Calendar app
 */
 
 
-var EquinoxCalc = {
+const EquinoxCalc = {
 
   vernal_equinox: function(year) {
     return EquinoxCalc.calcEquiSol(1, year);
@@ -71,7 +71,7 @@ var EquinoxCalc = {
     var S = 0;
     for( var i=0; i<24; i++ ) { S += A[i]*EquinoxCalc.COS( B[i] + (C[i]*T) ); }
     return S;
-  }, 
+  },
 
   //-----Correct TDT to UTC----------------------------------------------------------------
   fromTDTtoUTC: function ( tobj ) {
@@ -83,7 +83,7 @@ var EquinoxCalc = {
       /*1660*/  35, 33, 31, 29, 26,  24, 22, 20, 18, 16,  14, 12, 11, 10,  9,   8,  7,  7,  7,  7,
       /*1700*/   7,  7,  8,  8,  9,   9,  9,  9,  9, 10,  10, 10, 10, 10, 10,  10, 10, 11, 11, 11,
       /*1740*/  11, 11, 12, 12, 12,  12, 13, 13, 13, 14,  14, 14, 14, 15, 15,  15, 15, 15, 16, 16,
-      /*1780*/  16, 16, 16, 16, 16,  16, 15, 15, 14, 13,  
+      /*1780*/  16, 16, 16, 16, 16,  16, 15, 15, 14, 13,
       /*1800*/ 13.1, 12.5, 12.2, 12.0, 12.0,  12.0, 12.0, 12.0, 12.0, 11.9,  11.6, 11.0, 10.2,  9.2,  8.2,
       /*1830*/  7.1,  6.2,  5.6,  5.4,  5.3,   5.4,  5.6,  5.9,  6.2,  6.5,   6.8,  7.1,  7.3,  7.5,  7.6,
       /*1860*/  7.7,  7.3,  6.2,  5.2,  2.7,   1.4, -1.2, -2.8, -3.8, -4.8,  -5.5, -5.3, -5.6, -5.7, -5.9,
@@ -95,14 +95,14 @@ var EquinoxCalc = {
     var deltaT = 0; // deltaT = TDT - UTC (in Seconds)
     var Year = tobj.getUTCFullYear();
     var t = (Year - 2000) / 100;  // Centuries from the epoch 2000.0
-    
+
     if ( Year >= TBLfirst && Year <= TBLlast ) { // Find correction in table
       if (Year%2) { // Odd year - interpolate
         deltaT = ( TBL[(Year-TBLfirst-1)/2] + TBL[(Year-TBLfirst+1)/2] ) / 2;
       } else { // Even year - direct table lookup
         deltaT = TBL[(Year-TBLfirst)/2];
       }
-    } else if( Year < 948) { 
+    } else if( Year < 948) {
       deltaT = 2177 + 497*t + 44.1*EquinoxCalc.POW2(t);
     } else if( Year >=948) {
       deltaT =  102 + 102*t + 25.3*EquinoxCalc.POW2(t);
@@ -114,7 +114,7 @@ var EquinoxCalc = {
   }, // End fromTDTtoUTC
 
   //-----Julian Date to UTC Date Object----------------------------------------------------
-  // Meeus Astronmical Algorithms Chapter 7 
+  // Meeus Astronmical Algorithms Chapter 7
   fromJDtoUTC: function ( JD ){
     // JD = Julian Date, possible with fractional days
     // Output is a JavaScript UTC Date Object
@@ -132,9 +132,9 @@ var EquinoxCalc = {
       var E = EquinoxCalc.INT( ( B-D )/30.6001 );
       var DT = B - D - EquinoxCalc.INT(30.6001*E) + F;  // Day of Month with decimals for time
       var Mon = E - (E<13.5?1:13);      // Month Number
-      var Yr  = C - (Mon>2.5?4716:4715);    // Year    
+      var Yr  = C - (Mon>2.5?4716:4715);    // Year
       var Day = EquinoxCalc.INT( DT );          // Day of Month without decimals for time
-      var H = 24*(DT - Day);          // Hours and fractional hours 
+      var H = 24*(DT - Day);          // Hours and fractional hours
       var Hr = EquinoxCalc.INT( H );            // Integer Hours
       var M = 60*(H - Hr);          // Minutes and fractional minutes
       var Min = EquinoxCalc.INT( M );           // Integer Minutes
@@ -147,3 +147,5 @@ var EquinoxCalc = {
   } //End fromJDtoUTC
 
 }
+
+export default EquinoxCalc;

@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <link href="style.css" rel="stylesheet">
  <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
-<script src="extern/stellafane.js"></script>
-<script src="extern/blueyonder.js"></script>
-<script src="badi.js" charset="utf-8"></script>
+<script src="/browser-build-v1/badi-cal.js" charset="utf-8"></script>
 <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
 <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
 <script>
@@ -34,7 +32,7 @@ function show_date(d, sunset=false) {
           minute: "numeric"
       });
 
-      return d.toLocaleDateString() + "<br />" + time_string.toString(); 
+      return d.toLocaleDateString() + "<br />" + time_string.toString();
     } catch(e) {
       return d.toLocaleDateString();
     }
@@ -130,7 +128,7 @@ $(document).ready(function() {
 
   // Set handler for date picker
   $('#range_select').selectmenu({
-    change: range_change_handler  
+    change: range_change_handler
   });
 
   // Setup custom ranges
@@ -169,7 +167,7 @@ $(document).ready(function() {
     error: geoip_failed,
     timeout: 2000
   });
-  
+
 });
 </script>
 </head>

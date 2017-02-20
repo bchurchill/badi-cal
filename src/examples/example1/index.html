@@ -1,0 +1,203 @@
+<html>
+<head>
+<title>Badi Calendar</title>
+<meta charset="UTF-8">
+<link href="/style.css" rel="stylesheet">
+ <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<script src="/browser-build-v1/badi-cal.js" charset="utf-8"></script>
+<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+<script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-37863653-2', 'auto');
+  ga('send', 'pageview');
+</script>
+<script>
+
+// Takes a Date object, and returns the day, month and year (as seen in Tehran)
+function show_date(d, sunset=false) {
+
+  var place = document["place"];
+  if(!sunset || place == undefined) {
+    return d.toLocaleDateString();
+  } else {
+    try {
+      var sunset_time = BadiCal.find_sunset(d, place);
+      var time_string = sunset_time.toLocaleTimeString(undefined, {
+          hour: "numeric",
+          minute: "numeric"
+      });
+
+      return d.toLocaleDateString() + "<br />" + time_string.toString();
+    } catch(e) {
+      return d.toLocaleDateString();
+    }
+  }
+
+}
+
+function update_dates(d1, d2) {
+  var days = BadiCal.find_days(d1, d2);
+  var s = "";
+  s = s + "<table class='result_tab'>";
+  s = s + "<tr class='entry_row'><th class='entry_col'></th>";
+  s = s + "<th class='entry_col'><p class='underline'>Start</p><p class='bold'>(at sunset)</p></th>";
+  s = s + "<th class='entry_col'><p class='underline'>End</p><p class='bold'>(at sunset)</p></th>";
+  s = s + "<th class='entry_col'><p class='underline'>Badi Date</p></th></tr>";
+  for(var i = 0; i < days.length; i++) {
+    s = s + "<tr class='entry_row'>";
+    s = s + "<td class='entry_col'>" + days[i].title;
+    if(days[i].type == "Holy Day - Work Suspended") {
+      s = s + "&nbsp;<img class='day_logo' src='img/star.svg' />"
+    }
+    s = s + "</td>";
+    if(days[i].type.substr(0,8) == "Holy Day") {
+      s = s + "<td class='entry_col'>" + show_date(days[i].start_date, true) + "</td>";
+    } else {
+      s = s + "<td class='entry_col'>" + show_date(days[i].start_date, true) + "</td>";
+    }
+    s = s + "<td class='entry_col'>" + show_date(days[i].end_date, true) + "</td>";
+    s = s + "<td class='entry_col'>" + days[i].badi_date.toString() + "</td>";
+    s = s + "</tr>";
+  }
+  $('#results').append("</table>");
+  $('#results').empty();
+  $('#results').append(s);
+}
+
+function range_change_handler() {
+  var value = $('#range_select').val()
+  if(value == "90") {
+    $('#custom_range').hide();
+    var d1 = new Date().addDays(-1);
+    var d2 = (new Date()).addDays(90);
+    update_dates(d1, d2);
+  } else if (value == "this_year") {
+    $('#custom_range').hide();
+    var d= new Date();
+    var d1 = new Date(d.getFullYear(), 0, 1);
+    var d2 = new Date(d.getFullYear()+1, 0, 1);
+    update_dates(d1, d2);
+  } else if (value == "next_year") {
+    $('#custom_range').hide();
+    var d = new Date();
+    var d1 = new Date(d.getFullYear()+1, 0, 1);
+    var d2 = new Date(d.getFullYear()+2, 0, 1);
+    update_dates(d1, d2);
+  } else if (value == "custom") {
+    $('#custom_range').show();
+
+  }
+}
+
+function update_custom_dates() {
+    var d1 = $('#custom_from').datepicker("getDate");
+    var d2 = $('#custom_to').datepicker("getDate");
+    update_dates(d1, d2);
+    if(d1.getFullYear() < 2015 ||
+       d2.getFullYear() > 2064) {
+      $('#warning').show()
+    } else {
+      $('#warning').hide()
+    }
+}
+
+function located(place) {
+  document["place"] = place;
+
+  $('#location').text("(" + place.city + ", " + place.region_name + ")");
+
+  var today = new Date();
+  var today_badi = BadiCal.gregorian_to_badi(today, place);
+  $('#today').text("Today is " + today_badi.toString());
+
+  range_change_handler();
+}
+
+function geoip_failed() {
+  $('#location').text("Location unvailable.");
+  document["place"] = undefined;
+}
+
+$(document).ready(function() {
+  document["place"] = undefined;
+
+  // Set handler for date picker
+  $('#range_select').selectmenu({
+    change: range_change_handler
+  });
+
+  // Setup custom ranges
+  $('#custom_range').hide();
+  $('#warning').hide();
+  $('#custom_from').datepicker({
+    defaultDate: "+0d",
+    changeMonth: true,
+    changeYear: true,
+    onClose: function(selectedDate) {
+      $('#custom_to').datepicker("option", "minDate", selectedDate)
+    },
+    onSelect: update_custom_dates
+  });
+  $('#custom_to').datepicker({
+    defaultDate: "+90d",
+    changeMonth: true,
+    changeYear: true,
+    onClose: function(selectedDate) {
+      $('#custom_from').datepicker("option", "maxDate", selectedDate)
+    },
+    onSelect: update_custom_dates
+  });
+
+  // Initialize
+  var d1 = new Date().addDays(-1);
+  var d2 = (new Date()).addDays(90);
+  update_dates(d1, d2);
+
+  // Geolocate
+  $.ajax({
+    dataType: "jsonp",
+    url: "//freegeoip.net/json/",
+    success: located,
+    cache: true,
+    error: geoip_failed,
+    timeout: 2000
+  });
+
+});
+</script>
+</head>
+<body>
+<noscript>Javascript must be enabled for this site.</noscript>
+<div id='main'>
+<div id='controls' class='container'>
+<!--Set your location<br />
+Show dates from <select></select> to <select></select>-->
+<div id='today'></div>
+<div id='location'></div>
+<img class='day_logo' src='img/star.svg'> denotes work suspended for Holy Day<br /><br />
+<select id="range_select">
+<option value='90'>Upcoming 90 days</option>
+<option value='this_year'>This Gregorian year</option>
+<option value='next_year'>Next Gregorian year</option>
+<option value='custom'>Custom</option>
+</select><br />
+<div id='custom_range'>
+<label for="custom_from">From</label><input type="text" id="custom_from">
+<label for="custom_to">To</label><input type="text" id="custom_to">
+<h4 id='warning'>Dates before 2015 or after 2064 are estimates only.</h4>
+</div>
+</div>
+<div id='results' class='container'>
+</div> <!-- end results -->
+</div> <!-- main -->
+<br />
+<br />
+<br />
+<a href="https://github.com/bchurchill/badi-cal">Visit GitHub Project</a><br />
+Copyright 2015 Berkeley Churchill.  This is not an official site of any <a href="http://www.bahai.org">Bahá'í</a> institution.
+</body>

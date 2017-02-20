@@ -1,0 +1,4 @@
+{
+  "plugins": ["syntax-trailing-function-commas"],
+  "presets": ["latest"]
+}
