@@ -2,8 +2,8 @@
 
 ## Purpose
 
-This project is, at heart, a reusable javascript library for
-converting dates on the Badi calendar with the Gregorian calendar.
+This project is a reusable javascript library for converting dates between
+the Badi calendar and the Gregorian calendar.
 
 There's also a demo application which shows Holy days and the Badi months in a tabular listing.  It's hosted at https://bchurchill.github.io/badi-cal.
  * What day to host Feast on
@@ -95,9 +95,9 @@ to disable browser caching.
 
 #### src/HolyDays.js and src/LocationMap.js
 
-* These contain any state that the BadiCalendar needs for doing calculations.
+* These contain any data that the BadiCalendar needs for doing calculations.
   The location map contains longitude and latitude of important cities and
-  holyDays contains metadata about all the holy days.
+  HolyDays contains metadata about all the holy days.
 
 #### src/Astronomy.js
 
@@ -109,8 +109,9 @@ to disable browser caching.
 
 `npm run test`
 
-* If making breaking changes, increment the version number in package.json, and
-make sure all the examples still work
+* Ensure that both examples still work -- especially the second example, which functions as an important test.
+
+* If making breaking changes, increment the version number in package.json.
 
 * Re-Bundle the downloadable javascript file
 
@@ -121,13 +122,28 @@ npm run create-build
 
 ## Status
 
-This is in beta.  It has not been extensively tested.  Please let me know if ever you find an incorrect date -- that would be really bad!
+This code is probably stable enough to be used in a project. It has
+been used in small projects over the last two years or so, and we've
+yet to find any significant bugs (e.g. incorrect dates). However,
+using the API correctly can take some effort and it can be confusing
+(see, for example, https://github.com/bchurchill/badi-cal/issues/5).
+Thus, it's important to make sure you carefully test any projects that
+use this library to ensure that everything works right.
 
-Future work includes adding a location picker to the demo application to see sunrise/sunset times.
+The underlying algorithms used for the astronomical computations,
+which are taken from a famous text by Meeus, are typically accurate to
+within a few minutes. However, it is inaccurate for very high and very
+low lattitudes (those close to the poles). It also looses accuracy
+going into the future. As a result of these issues, we verify the
+dates of Naw-Ruz and the Twin Holy Days with those distributed from
+the Baha'i World Centre, and ensure that whatever we generate matches
+that.
 
 ## Specs
 
-In a world ravaged by thousand-page Intel manuals, I'm happy to use the following letters from the Universal House of Justice as a specification:
+In a world ravaged by thousand-page Intel manuals, we're happy to
+use the following letters from the Universal House of Justice as a
+specification:
 
  * The 10 July 2014 letter, http://universalhouseofjustice.bahai.org/activities-bahai-community/20140710_001
  * The 11 Dec 2014 letter, included in this repository
