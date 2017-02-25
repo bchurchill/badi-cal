@@ -4,20 +4,23 @@
   "description": "A module for calculating dates within the Badi Calendar",
   "main": "build-v2",
   "scripts": {
-    "clean-build": "rm -rf build-v2 browser-build-v1 browser-build-v2 examples/example1/browser-build-v1 examples/example2/browser-build-v2",
+    "clean-build": "rm -rf build-v2 browser-build-v1 browser-build-v2 examples/example1/browser-build-v1",
     "create-build": "npm-run-all --parallel create-build:*",
     "create-build:browser-v1": "webpack --config webpack.config.v1.js",
     "create-build:browser-v2": "webpack --config webpack.config.v2.js",
     "create-build:example1": "webpack --config webpack.config.example1.js",
-    "create-build:example2": "webpack --config webpack.config.example2.js",
-    "create-build:v2": "babel src --out-dir build-v2 --ignore v1,v2,__tests__,examples",
+    "create-build:v2": "babel src --out-dir build-v2 --ignore v1,v2,__tests__,examples,testUtils.js",
     "lint": "esw webpack.config.* src --color",
     "lint-watch": "npm run lint -- --watch",
     "start-example1": "http-server examples/example1",
-    "start-example2": "http-server examples/example2",
     "test": "jest",
-    "test-watch": "npm run test -- --watch"
+    "test-watch": "npm run test -- --watch",
+    "validate": "npm ls"
   },
+  "pre-commit": [
+    "lint",
+    "test"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bchurchill/badi-cal.git"
@@ -43,6 +46,7 @@
     "eslint-watch": "^2.1.14",
     "jest": "^18.1.0",
     "jest-cli": "^18.1.0",
+    "precommit-hook": "^3.0.0",
     "webpack": "^1.14.0"
   },
   "dependencies": {

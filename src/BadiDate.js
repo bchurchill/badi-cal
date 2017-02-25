@@ -15,6 +15,10 @@ const MillisPerDay = MillisPerHour * 24;
  */
 export default class BadiDate {
 
+  static badiFromGregorianYear(year) { return (year - 1844) + 1; }
+
+  static gregorianFromBadiYear(year) { return (year - 1) + 1844; }
+
   /**
    * Takes a Date and location and returns a BadiDate. badi_to_gregorian on the
    * returned value should produce an identical date object.
@@ -28,7 +32,7 @@ export default class BadiDate {
       gregorianYear -= 1;
       gregorianNawRuz = getUTCDateForNawRuzOnYear(gregorianYear);
     }
-    const badiYear = badiFromGregorianYear(gregorianYear);
+    const badiYear = BadiDate.badiFromGregorianYear(gregorianYear);
 
     let daysSinceNawRuz =
       Math.floor((gregorianDate - gregorianNawRuz) / MillisPerDay);
@@ -144,7 +148,7 @@ export default class BadiDate {
 
     // Month 18 is Interclary Days, this is a special case.
     if (this.getMonth() < 19) {
-      const gregorianYear = gregorianFromBadiYear(this.getYear());
+      const gregorianYear = BadiDate.gregorianFromBadiYear(this.getYear());
       const gregorianNawRuz = getUTCDateForNawRuzOnYear(gregorianYear);
       const daysToAdd = this.getMonth() * 19 + this.getDay() - 2;
       const gregorianStartOfDay =
@@ -160,7 +164,7 @@ export default class BadiDate {
     }
 
     // this.getMonth() === 19
-    const gregorianEnd = gregorianFromBadiYear(this.getYear() + 1);
+    const gregorianEnd = BadiDate.gregorianFromBadiYear(this.getYear() + 1);
     const nextYearNawRuz = getUTCDateForNawRuzOnYear(gregorianEnd);
     const daysToAdd = this.getDay() - 19 - 2; // Subtract 1 month.
     const gregorianStartOfDay = new Date(
@@ -178,13 +182,7 @@ export default class BadiDate {
 
 }
 
-function badiFromGregorianYear(year) {
-  return (year - 1844) + 1;
-}
 
-function gregorianFromBadiYear(year) {
-  return (year - 1) + 1844;
-}
 
 const MonthNames = [
   'Bahá',
