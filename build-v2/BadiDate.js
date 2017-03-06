@@ -21,13 +21,23 @@ var MillisPerDay = MillisPerHour * 24;
 
 var BadiDate = function () {
   _createClass(BadiDate, null, [{
-    key: 'fromGregorianDate',
-
+    key: 'badiFromGregorianYear',
+    value: function badiFromGregorianYear(year) {
+      return year - 1844 + 1;
+    }
+  }, {
+    key: 'gregorianFromBadiYear',
+    value: function gregorianFromBadiYear(year) {
+      return year - 1 + 1844;
+    }
 
     /**
      * Takes a Date and location and returns a BadiDate. badi_to_gregorian on the
      * returned value should produce an identical date object.
      */
+
+  }, {
+    key: 'fromGregorianDate',
     value: function fromGregorianDate(gregorianDate, place) {
       // TODO: THIS LOGIC SHOULD GET MOVED TO NORMALIZE METHOD!!!
 
@@ -37,7 +47,7 @@ var BadiDate = function () {
         gregorianYear -= 1;
         gregorianNawRuz = (0, _Astronomy.getUTCDateForNawRuzOnYear)(gregorianYear);
       }
-      var badiYear = badiFromGregorianYear(gregorianYear);
+      var badiYear = BadiDate.badiFromGregorianYear(gregorianYear);
 
       var daysSinceNawRuz = Math.floor((gregorianDate - gregorianNawRuz) / MillisPerDay);
       var hoursAfterSunset = 0;
@@ -149,7 +159,7 @@ var BadiDate = function () {
 
       // Month 18 is Interclary Days, this is a special case.
       if (this.getMonth() < 19) {
-        var gregorianYear = gregorianFromBadiYear(this.getYear());
+        var gregorianYear = BadiDate.gregorianFromBadiYear(this.getYear());
         var gregorianNawRuz = (0, _Astronomy.getUTCDateForNawRuzOnYear)(gregorianYear);
         var _daysToAdd = this.getMonth() * 19 + this.getDay() - 2;
         var _gregorianStartOfDay = (0, _Astronomy.incrementGregorianDays)(gregorianNawRuz, _daysToAdd);
@@ -158,7 +168,7 @@ var BadiDate = function () {
       }
 
       // this.getMonth() === 19
-      var gregorianEnd = gregorianFromBadiYear(this.getYear() + 1);
+      var gregorianEnd = BadiDate.gregorianFromBadiYear(this.getYear() + 1);
       var nextYearNawRuz = (0, _Astronomy.getUTCDateForNawRuzOnYear)(gregorianEnd);
       var daysToAdd = this.getDay() - 19 - 2; // Subtract 1 month.
       var gregorianStartOfDay = new Date(nextYearNawRuz.getTime() + daysToAdd * MillisPerDay);
@@ -172,13 +182,5 @@ var BadiDate = function () {
 
 exports.default = BadiDate;
 
-
-function badiFromGregorianYear(year) {
-  return year - 1844 + 1;
-}
-
-function gregorianFromBadiYear(year) {
-  return year - 1 + 1844;
-}
 
 var MonthNames = ['Bahá', 'Jalál', 'Jamál', '‘Aẓamat', 'Núr', 'Raḥmat', 'Kalimát', 'Kamál', 'Asmá’', '‘Izzat', 'Mashíyyat', '‘Ilm', 'Qudrat', 'Qawl', 'Masá’il', 'Sharaf', 'Sulṭán', 'Mulk', 'Ayyám-i-Há', '‘Alá’'];

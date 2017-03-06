@@ -46,7 +46,7 @@ There's also a demo application which shows Holy days and the Badi months in a t
 ```
 cd path/to/repo
 yarn # or "npm install" if you are not using yarn
-npm run start-example1 # or "npm run start-example2"
+npm run start-example1
 ```
 
 * Go to localhost:8080 in your browser
