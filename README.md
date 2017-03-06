@@ -1,4 +1,5 @@
 # badi-cal
+[![Build Status](https://travis-ci.org/bchurchill/badi-cal.svg?branch=master)]
 
 ## Purpose
 
