@@ -11,11 +11,13 @@ There's also a demo application which shows Holy days and the Badi months in a t
 
 ## Using the Code
 
-* If you would like to use the code in this project, the "browser-build-v1" and
- "browser-build-v2" directories contain v1 and v2 of badi-cal that out-of-the-box
- box in browsers. If you would like to use this project in a browser environment,
- go ahead and import the javascript file from one of these directories into your
- html.
+* If you would like to use the code in this project, the
+ "browser-build-v1" and "browser-build-v2" directories contain v1 and
+ v2 of badi-cal that out-of-the-box box in browsers. If you would like
+ to use this project in a browser environment, go ahead and import the
+ javascript file from one of these directories into your html. The v1
+ code has slightly more functionality than the v2 version, but this
+ functionality is deprecated. The v2 API is cleaner.
 * If you have a more sophisticated javascript environment (node, webpack, etc...)
  then the "build-v2" directory can be used in your project. This will work with
  environments that support javascript modules (es6 imports, CommonJS, etc...)
@@ -109,7 +111,7 @@ to disable browser caching.
 
 `npm run test`
 
-* Ensure that both examples still work -- especially the second example, which functions as an important test.
+* Ensure the first example still works.
 
 * If making breaking changes, increment the version number in package.json.
 
