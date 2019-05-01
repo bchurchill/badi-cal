@@ -144,7 +144,7 @@ that.
 
 ## Specs
 
-In a world ravaged by thousand-page Intel manuals, we're happy to
+In a world ravaged by thousand-page technical manuals, we're happy to
 use the following letters from the Universal House of Justice as a
 specification:
 
